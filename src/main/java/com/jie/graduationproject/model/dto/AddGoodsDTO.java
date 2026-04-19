@@ -2,11 +2,9 @@ package com.jie.graduationproject.model.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
 
 import java.time.LocalDate;
 
-@Data
 public class AddGoodsDTO {
 
     //商品唯一编码（如：6901234567890）
@@ -41,4 +39,84 @@ public class AddGoodsDTO {
     //供应商联系方式（电话等）
     private String supplierContact;
 
+    // Getter和Setter方法
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getStorageTemperature() {
+        return storageTemperature;
+    }
+
+    public void setStorageTemperature(String storageTemperature) {
+        this.storageTemperature = storageTemperature;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Integer getGoodsQuantity() {
+        return goodsQuantity;
+    }
+
+    public void setGoodsQuantity(Integer goodsQuantity) {
+        this.goodsQuantity = goodsQuantity;
+    }
+
+    public LocalDate getStorageDate() {
+        return storageDate;
+    }
+
+    public void setStorageDate(LocalDate storageDate) {
+        this.storageDate = storageDate;
+    }
+
+    public LocalDate getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(LocalDate expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    public String getSupplierName() {
+        return supplierName;
+    }
+
+    public void setSupplierName(String supplierName) {
+        this.supplierName = supplierName;
+    }
+
+    public String getSupplierContact() {
+        return supplierContact;
+    }
+
+    public void setSupplierContact(String supplierContact) {
+        this.supplierContact = supplierContact;
+    }
 }

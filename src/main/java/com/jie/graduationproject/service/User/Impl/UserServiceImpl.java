@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import jakarta.annotation.PostConstruct;
 
 @Service
 @Transactional
@@ -31,6 +33,53 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(PasswordEncoder passwordEncoder, UserRepository userRepository) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+    }
+    
+    @PostConstruct
+    public void initAdminUser() {
+        try {
+            // 检查是否有ADMIN权限的用户
+            long adminCount = userRepository.countByRole("ADMIN");
+            
+            if (adminCount == 0) {
+                System.out.println("数据库中无ADMIN用户，正在创建默认管理员...");
+                
+                // 检查admin用户是否已存在（可能角色不是ADMIN）
+                Optional<User> existingAdminOpt = userRepository.findUserByUsername("admin");
+                
+                if (existingAdminOpt.isPresent()) {
+                    // 如果admin用户存在但角色不是ADMIN，更新为ADMIN
+                    User adminUser = existingAdminOpt.get();
+                    if (!"ADMIN".equals(adminUser.getRole())) {
+                        adminUser.setRole("ADMIN");
+                        adminUser.setPassword(passwordEncoder.encode("123456"));
+                        userRepository.save(adminUser);
+                        System.out.println("已更新admin用户为ADMIN角色，密码重置为123456");
+                    }
+                } else {
+                    // 创建新的admin用户
+                    User adminUser = new User();
+                    adminUser.setUsername("admin");
+                    adminUser.setPassword(passwordEncoder.encode("123456"));
+                    adminUser.setRole("ADMIN");
+                    adminUser.setPhone("13800138000");
+                    
+                    userRepository.save(adminUser);
+                    System.out.println("已创建默认管理员用户: admin/123456 (ADMIN角色)");
+                }
+                
+                System.out.println("默认管理员信息:");
+                System.out.println("用户名: admin");
+                System.out.println("密码: 123456");
+                System.out.println("角色: ADMIN");
+            } else {
+                System.out.println("数据库中已有 " + adminCount + " 个ADMIN用户");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("初始化管理员用户时出错: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -46,9 +95,12 @@ public class UserServiceImpl implements UserService {
             newUser.setUsername(loginRegisterDTO.getUsername());
             newUser.setPassword(passwordEncoder.encode(loginRegisterDTO.getPassword()));
             
-            // 设置默认角色：所有新注册用户为仓库管理员
-            // admin用户已经在数据库初始化时设置为ADMIN
-            newUser.setRole("STORE_KEEPER");
+            // 设置默认角色：用户名包含"admin"的设为ADMIN，其他为STORE_KEEPER
+            if (loginRegisterDTO.getUsername().toLowerCase().contains("admin")) {
+                newUser.setRole("ADMIN");
+            } else {
+                newUser.setRole("STORE_KEEPER");
+            }
 
             userRepository.save(newUser);
 

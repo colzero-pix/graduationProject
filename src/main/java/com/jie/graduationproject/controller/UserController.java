@@ -5,7 +5,7 @@ import com.jie.graduationproject.model.dto.LoginResponseDTO;
 import com.jie.graduationproject.model.dto.LoginRegisterDTO;
 import com.jie.graduationproject.model.dto.PasswordUpdateDTO;
 import com.jie.graduationproject.model.dto.ResetPasswordDTO;
-import com.jie.graduationproject.service.AuthService;
+import com.jie.graduationproject.jwt.AuthService;
 import com.jie.graduationproject.service.User.Impl.UserServiceImpl;
 import com.jie.graduationproject.service.User.UserService;
 import jakarta.validation.Valid;
@@ -16,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -38,9 +39,17 @@ public class UserController {
             LoginResponseDTO response = authService.authenticateUser(loginRegisterDTO);
             return ResponseEntity.ok(response);
         } catch (UnauthorizedAccessException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("code", HttpStatus.UNAUTHORIZED.value());
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("success", false);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("code", HttpStatus.BAD_REQUEST.value());
+            errorResponse.put("message", e.getMessage());
+            errorResponse.put("success", false);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
 
     }
@@ -77,6 +86,7 @@ public class UserController {
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllUsers() {
+
         return userServiceImpl.getAllUsers();
     }
 

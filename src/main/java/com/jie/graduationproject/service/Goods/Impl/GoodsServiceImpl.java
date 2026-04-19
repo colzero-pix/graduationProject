@@ -178,13 +178,20 @@ public class GoodsServiceImpl implements GoodsService {
                         
                         if (queryDTO.getNearExpiry() != null && queryDTO.getNearExpiry()) {
                             LocalDate warningDate = LocalDate.now().plusDays(30);
-                            match = match && goods.getExpiryDate() != null && 
-                                    goods.getExpiryDate().isBefore(warningDate);
+                            if (goods.getExpiryDate() != null && goods.getExpiryDate().isBefore(warningDate)) {
+                                // 商品临近过期，继续匹配
+                            } else {
+                                match = false; // 商品不临近过期，不匹配
+                            }
                         }
                         
                         if (queryDTO.getLowStock() != null && queryDTO.getLowStock()) {
-                            match = match && goods.getThreshold() != null && 
-                                    goods.getQuantity() <= goods.getThreshold();
+                            if (goods.getThreshold() != null && goods.getQuantity() != null && 
+                                goods.getQuantity() <= goods.getThreshold()) {
+                                // 商品库存低，继续匹配
+                            } else {
+                                match = false; // 商品库存不低，不匹配
+                            }
                         }
                         
                         return match;
@@ -231,6 +238,7 @@ public class GoodsServiceImpl implements GoodsService {
 
     @Override
     public List<Goods> getGoodsByExpiryDate() {
+
         return goodsRepository.findAllByOrderByExpiryDateAsc();
     }
 

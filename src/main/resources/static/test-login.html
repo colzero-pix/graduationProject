@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试登录</title>
+</head>
+<body>
+    <h1>测试登录API</h1>
+    <div>
+        <input type="text" id="username" placeholder="用户名" value="admin">
+        <input type="password" id="password" placeholder="密码" value="123456">
+        <button onclick="testLogin()">测试登录</button>
+    </div>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    
+    <script>
+        function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('测试登录:', username, password);
+            
+            fetch('/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => {
+                console.log('状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('响应:', data);
+                document.getElementById('result').innerHTML = 
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.token) {
+                    document.getElementById('result').innerHTML += 
+                        '<p style="color: green;">登录成功! Token: ' + data.token.substring(0, 20) + '...</p>';
+                }
+            })
+            .catch(error => {
+                console.error('错误:', error);
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: red;">错误: ' + error + '</p>';
+            });
+        }
+    </script>
+</body>
+</html>

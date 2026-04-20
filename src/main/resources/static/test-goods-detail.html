@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试商品详情API</title>
+</head>
+<body>
+    <h1>测试商品详情API</h1>
+    <div>
+        <input type="number" id="goodsId" placeholder="商品ID" value="1">
+        <button onclick="testGoodsDetail()">测试商品详情</button>
+    </div>
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; white-space: pre-wrap;"></div>
+    
+    <script>
+        function testGoodsDetail() {
+            const goodsId = document.getElementById('goodsId').value;
+            
+            console.log('测试商品详情API，商品ID:', goodsId);
+            
+            fetch('/store-keeper/goods/' + goodsId + '/detail', {
+                headers: {
+                    'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+                }
+            })
+            .then(response => {
+                console.log('状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('响应:', data);
+                document.getElementById('result').innerHTML = 
+                    '<h3>商品详情响应:</h3>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.id) {
+                    document.getElementById('result').innerHTML += 
+                        '<h3>解析后的信息:</h3>' +
+                        '<p><strong>商品名称:</strong> ' + data.name + '</p>' +
+                        '<p><strong>SKU:</strong> ' + data.sku + '</p>' +
+                        '<p><strong>总库存:</strong> ' + data.quantity + '</p>' +
+                        '<p><strong>库存位置数:</strong> ' + (data.inventoryLocations ? data.inventoryLocations.length : 0) + '</p>';
+                    
+                    if (data.inventoryLocations && data.inventoryLocations.length > 0) {
+                        document.getElementById('result').innerHTML += 
+                            '<h4>库存位置:</h4>' +
+                            '<table border="1" cellpadding="5">' +
+                            '<tr><th>货架位置</th><th>数量</th><th>批次号</th></tr>';
+                        
+                        data.inventoryLocations.forEach(loc => {
+                            document.getElementById('result').innerHTML += 
+                                '<tr>' +
+                                '<td>' + (loc.area || '') + ' - ' + (loc.shelfName || '') + ' - ' + (loc.levelName || '') + '</td>' +
+                                '<td>' + loc.quantity + '</td>' +
+                                '<td>' + (loc.batchNumber || '-') + '</td>' +
+                                '</tr>';
+                        });
+                        
+                        document.getElementById('result').innerHTML += '</table>';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('错误:', error);
+                document.getElementById('result').innerHTML = 
+                    '<p style="color: red;">错误: ' + error + '</p>';
+            });
+        }
+        
+        // 检查是否已登录
+        if (!localStorage.getItem('auth_token')) {
+            document.getElementById('result').innerHTML = 
+                '<p style="color: orange;">请先登录主应用获取token，然后刷新此页面</p>';
+        }
+    </script>
+</body>
+</html>

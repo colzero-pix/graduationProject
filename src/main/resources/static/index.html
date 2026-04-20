@@ -1546,8 +1546,8 @@
         }
         
         function bindTableActions() {
-            // 绑定编辑按钮
-            document.querySelectorAll('.action-btn:not(.delete)').forEach(btn => {
+            // 绑定编辑按钮（排除详情按钮）
+            document.querySelectorAll('.action-btn:not(.delete):not(.detail)').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const goodsId = this.getAttribute('data-id');
                     alert('编辑商品功能开发中... (商品ID: ' + goodsId + ')');
@@ -1824,6 +1824,7 @@
                     '<td>' + (goods.storageDate || 'N/A') + '</td>' +
                     '<td>' + (goods.expiryDate || 'N/A') + '</td>' +
                     '<td>' +
+                    '<button class="action-btn detail" data-id="' + goods.id + '" onclick="showGoodsDetail(' + goods.id + ')">详情</button>' +
                     '<button class="action-btn" data-id="' + goods.id + '">编辑</button>' +
                     '<button class="action-btn delete" data-id="' + goods.id + '">删除</button>' +
                     '</td>' +
@@ -1848,6 +1849,184 @@
                 '<p>功能包括：多位置库存管理、FIFO出库、过期预警、容量监控等。</p>' +
                 '</div>';
         }
+        
+        // ========== 商品详情查询功能 ==========
+        
+        async function showGoodsDetail(goodsId) {
+            console.log('查询商品详情:', goodsId);
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/goods/' + goodsId + '/detail', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const goodsDetail = await response.json();
+                    renderGoodsDetailModal(goodsDetail);
+                } else {
+                    const errorData = await response.json();
+                    alert('获取商品详情失败: ' + (errorData.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('查询商品详情错误:', error);
+                alert('网络错误，请检查连接');
+            }
+        }
+        
+        function renderGoodsDetailModal(goodsDetail) {
+            // 创建模态框HTML
+            let modalHtml = '<div id="goodsDetailModal" class="modal" style="display: flex;">' +
+                '<div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">' +
+                '<div class="modal-header">' +
+                '<h3>商品详情 - ' + (goodsDetail.name || '未知商品') + '</h3>' +
+                '<button class="close-btn" onclick="closeGoodsDetailModal()">×</button>' +
+                '</div>' +
+                '<div class="modal-body">' +
+                
+                // 商品基本信息
+                '<div class="form-section">' +
+                '<h4>商品基本信息</h4>' +
+                '<div class="goods-info-grid">' +
+                '<div class="info-item"><strong>商品ID:</strong> ' + (goodsDetail.id || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>商品编码:</strong> ' + (goodsDetail.sku || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>商品名称:</strong> ' + (goodsDetail.name || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>存放温度:</strong> ' + (goodsDetail.storageTemperature || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>状态:</strong> <span class="status ' + (goodsDetail.status === '正常' ? 'active' : 'inactive') + '">' + (goodsDetail.status || '未知') + '</span></div>' +
+                '<div class="info-item"><strong>总库存:</strong> ' + (goodsDetail.quantity || 0) + '</div>' +
+                '<div class="info-item"><strong>库存阈值:</strong> ' + (goodsDetail.threshold || 0) + '</div>' +
+                '<div class="info-item"><strong>入库日期:</strong> ' + (goodsDetail.storageDate || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>过期日期:</strong> ' + (goodsDetail.expiryDate || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>供应商:</strong> ' + (goodsDetail.supplierName || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>联系方式:</strong> ' + (goodsDetail.supplierContact || 'N/A') + '</div>' +
+                '</div>' +
+                '</div>' +
+                
+                // 库存统计信息
+                '<div class="form-section">' +
+                '<h4>库存统计</h4>' +
+                '<div class="inventory-stats" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0;">' +
+                '<div class="stat-card">' +
+                '<h3>库存位置</h3>' +
+                '<p>' + (goodsDetail.totalLocations || 0) + '</p>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                '<h3>总数量</h3>' +
+                '<p>' + (goodsDetail.totalQuantity || 0) + '</p>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                '<h3>最早过期</h3>' +
+                '<p>' + (goodsDetail.earliestExpiryDate || '无') + '</p>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                '<h3>最晚入库</h3>' +
+                '<p>' + (goodsDetail.latestStorageDate || '无') + '</p>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+            
+            // 库存位置信息
+            if (goodsDetail.inventoryLocations && goodsDetail.inventoryLocations.length > 0) {
+                modalHtml += '<div class="form-section">' +
+                    '<h4>库存位置详情 (' + goodsDetail.inventoryLocations.length + '个位置)</h4>' +
+                    '<div class="inventory-table">' +
+                    '<table>' +
+                    '<thead>' +
+                    '<tr>' +
+                    '<th>货架位置</th>' +
+                    '<th>具体位置</th>' +
+                    '<th>数量</th>' +
+                    '<th>批次号</th>' +
+                    '<th>入库日期</th>' +
+                    '<th>过期日期</th>' +
+                    '<th>状态</th>' +
+                    '</tr>' +
+                    '</thead>' +
+                    '<tbody>';
+                
+                goodsDetail.inventoryLocations.forEach(location => {
+                    const statusClass = location.status === '正常' ? 'active' : 'inactive';
+                    modalHtml += '<tr>' +
+                        '<td>' + (location.area || '') + ' - ' + (location.shelfName || '') + ' - ' + (location.levelName || '') + '</td>' +
+                        '<td>' + (location.position || '-') + '</td>' +
+                        '<td>' + (location.quantity || 0) + '</td>' +
+                        '<td>' + (location.batchNumber || '-') + '</td>' +
+                        '<td>' + (location.storageDate || '-') + '</td>' +
+                        '<td>' + (location.expiryDate || '-') + '</td>' +
+                        '<td><span class="status ' + statusClass + '">' + (location.status || '未知') + '</span></td>' +
+                        '</tr>';
+                });
+                
+                modalHtml += '</tbody></table></div></div>';
+            } else {
+                modalHtml += '<div class="form-section">' +
+                    '<h4>库存位置</h4>' +
+                    '<p style="color: #666; text-align: center;">暂无库存位置信息</p>' +
+                    '</div>';
+            }
+            
+            modalHtml += '</div>' + // 结束 modal-body
+                '<div class="modal-footer">' +
+                '<button type="button" class="btn-cancel" onclick="closeGoodsDetailModal()">关闭</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+            
+            // 添加到页面
+            const modalContainer = document.createElement('div');
+            modalContainer.innerHTML = modalHtml;
+            document.body.appendChild(modalContainer.firstChild);
+            
+            // 点击模态框背景关闭
+            document.getElementById('goodsDetailModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeGoodsDetailModal();
+                }
+            });
+        }
+        
+        function closeGoodsDetailModal() {
+            const modal = document.getElementById('goodsDetailModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // 添加CSS样式
+        const style = document.createElement('style');
+        style.textContent = `
+            .goods-info-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            .info-item {
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 6px;
+                border-left: 4px solid #64b5f6;
+            }
+            .info-item strong {
+                color: #333;
+                margin-right: 8px;
+            }
+            .detail-btn {
+                background: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 6px 12px;
+                cursor: pointer;
+                margin-right: 5px;
+            }
+            .detail-btn:hover {
+                background: #45a049;
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

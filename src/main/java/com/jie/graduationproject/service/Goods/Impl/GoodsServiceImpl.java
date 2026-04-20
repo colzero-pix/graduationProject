@@ -1,10 +1,13 @@
 package com.jie.graduationproject.service.Goods.Impl;
 
 import com.jie.graduationproject.model.dto.AddGoodsDTO;
+import com.jie.graduationproject.model.dto.GoodsDetailDTO;
 import com.jie.graduationproject.model.dto.GoodsQueryDTO;
 import com.jie.graduationproject.model.dto.UpdateGoodsDTO;
 import com.jie.graduationproject.model.entity.Goods;
+import com.jie.graduationproject.model.entity.InventoryLocation;
 import com.jie.graduationproject.repository.GoodsRepository;
+import com.jie.graduationproject.repository.InventoryLocationRepository;
 import com.jie.graduationproject.service.Goods.GoodsService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +25,12 @@ import java.util.Optional;
 public class GoodsServiceImpl implements GoodsService {
 
     private final GoodsRepository goodsRepository;
+    private final InventoryLocationRepository inventoryLocationRepository;
 
     @Autowired
-    public GoodsServiceImpl(GoodsRepository goodsRepository) {
+    public GoodsServiceImpl(GoodsRepository goodsRepository, InventoryLocationRepository inventoryLocationRepository) {
         this.goodsRepository = goodsRepository;
+        this.inventoryLocationRepository = inventoryLocationRepository;
     }
 
     @Override
@@ -279,6 +284,56 @@ public class GoodsServiceImpl implements GoodsService {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("查询失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getGoodsDetail(Long goodsId) {
+        try {
+            // 检查商品是否存在
+            Optional<Goods> optionalGoods = goodsRepository.findById(goodsId);
+            if (optionalGoods.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("商品不存在");
+            }
+            
+            Goods goods = optionalGoods.get();
+            GoodsDetailDTO detailDTO = GoodsDetailDTO.fromGoods(goods);
+            
+            // 获取商品的库存位置信息
+            List<InventoryLocation> inventoryLocations = inventoryLocationRepository.findByGoodsIdAndStatus(goodsId, "正常");
+            
+            // 转换库存位置信息
+            for (InventoryLocation location : inventoryLocations) {
+                GoodsDetailDTO.InventoryLocationInfo locationInfo = new GoodsDetailDTO.InventoryLocationInfo();
+                locationInfo.setLocationId(location.getId());
+                locationInfo.setShelfLevelId(location.getShelfLevel().getId());
+                locationInfo.setShelfName(location.getShelfLevel().getShelf().getShelfName());
+                locationInfo.setShelfCode(location.getShelfLevel().getShelf().getShelfCode());
+                locationInfo.setArea(location.getShelfLevel().getShelf().getArea());
+                locationInfo.setShelfType(location.getShelfLevel().getShelf().getShelfType());
+                locationInfo.setLevelName(location.getShelfLevel().getLevelName());
+                locationInfo.setLevelNumber(location.getShelfLevel().getLevelNumber());
+                locationInfo.setPosition(location.getPosition());
+                locationInfo.setQuantity(location.getQuantity());
+                locationInfo.setBatchNumber(location.getBatchNumber());
+                locationInfo.setStorageDate(location.getStorageDate());
+                locationInfo.setExpiryDate(location.getExpiryDate());
+                locationInfo.setStatus(location.getStatus());
+                locationInfo.setRemarks(location.getRemarks());
+                locationInfo.setCreatedAt(location.getCreatedAt());
+                
+                detailDTO.addInventoryLocation(locationInfo);
+            }
+            
+            // 计算统计信息
+            detailDTO.calculateStatistics();
+            
+            return ResponseEntity.ok(detailDTO);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("查询商品详情失败: " + e.getMessage());
         }
     }
 }

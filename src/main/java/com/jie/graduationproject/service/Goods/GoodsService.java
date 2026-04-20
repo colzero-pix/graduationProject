@@ -30,5 +30,8 @@ public interface GoodsService {
     public ResponseEntity<?> getLowStockGoods();
 
     public ResponseEntity<?> getExpiringGoods(Integer days);
+    
+    // 查询商品详情（包含库存位置信息）
+    public ResponseEntity<?> getGoodsDetail(Long goodsId);
 
 }

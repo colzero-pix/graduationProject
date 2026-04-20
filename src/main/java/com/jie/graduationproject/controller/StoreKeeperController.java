@@ -182,6 +182,13 @@ public class StoreKeeperController {
     public ResponseEntity<?> getExpiringGoods(@RequestParam(defaultValue = "7") Integer days) {
         return goodsServiceImpl.getExpiringGoods(days);
     }
+    
+    // 查询商品详情（包含库存位置信息）
+    @GetMapping("/goods/{id}/detail")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getGoodsDetail(@PathVariable Long id) {
+        return goodsServiceImpl.getGoodsDetail(id);
+    }
 
     // ========== 货架层管理接口 ==========
     

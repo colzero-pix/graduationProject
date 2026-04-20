@@ -49,8 +49,9 @@ public class GoodsServiceImpl implements GoodsService {
             goods.setStorageTemperature(addGoodsDTO.getStorageTemperature());
             goods.setLocation(addGoodsDTO.getLocation());
             goods.setStatus(addGoodsDTO.getStatus() != null ? addGoodsDTO.getStatus() : "正常");
-            goods.setQuantity(addGoodsDTO.getGoodsQuantity() != null ? addGoodsDTO.getGoodsQuantity() : 0);
-            goods.setThreshold(addGoodsDTO.getGoodsQuantity() != null ? addGoodsDTO.getGoodsQuantity() / 5 : 0); // 默认阈值为库存的20%
+            // 商品类型添加时不设置库存数量，库存数量从inventory_location表计算
+            goods.setQuantity(0);
+            goods.setThreshold(addGoodsDTO.getThreshold() != null ? addGoodsDTO.getThreshold() : 10);
             goods.setStorageDate(addGoodsDTO.getStorageDate() != null ? addGoodsDTO.getStorageDate() : LocalDate.now());
             goods.setExpiryDate(addGoodsDTO.getExpiryDate());
             goods.setSupplierName(addGoodsDTO.getSupplierName());
@@ -328,6 +329,10 @@ public class GoodsServiceImpl implements GoodsService {
             
             // 计算统计信息
             detailDTO.calculateStatistics();
+            
+            // 重要：覆盖商品表中的quantity字段，使用实际库存位置计算的总数量
+            // 这样前端显示的就是正确的总库存数量
+            detailDTO.setQuantity(detailDTO.getTotalQuantity());
             
             return ResponseEntity.ok(detailDTO);
             

@@ -461,6 +461,39 @@
             border-color: #ff4757;
         }
         
+        .action-btn.inventory {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        
+        .action-btn.inventory:hover {
+            background: #388e3c;
+            border-color: #388e3c;
+        }
+        
+        .action-btn.detail {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        
+        .action-btn.detail:hover {
+            background: #1976d2;
+            border-color: #1976d2;
+        }
+        
+        .low-stock {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
         .loading {
             text-align: center;
             padding: 40px;
@@ -935,25 +968,32 @@
     <div id="addGoodsModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>添加商品</h3>
+                <h3>添加商品类型</h3>
+                <div class="modal-subtitle">添加新的商品类型/品类到系统</div>
                 <button class="modal-close" id="closeAddGoodsModal">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="addGoodsForm">
+                    <div class="form-note">
+                        <p><strong>注意：</strong>此操作仅添加商品类型信息。库存管理（入库/出库）请使用专门的库存管理功能。</p>
+                    </div>
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label for="goodsSku">商品编码 (SKU)*</label>
                             <input type="text" id="goodsSku" name="sku" placeholder="如: 6901234567890" required>
+                            <div class="form-hint">商品的唯一标识码</div>
                         </div>
                         <div class="form-group">
                             <label for="goodsName">商品名称*</label>
                             <input type="text" id="goodsName" name="name" placeholder="请输入商品名称" required>
+                            <div class="form-hint">如：矿泉水、饼干、牛奶等</div>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="storageTemperature">存放温度*</label>
+                            <label for="storageTemperature">存放温度要求*</label>
                             <select id="storageTemperature" name="storageTemperature" required>
                                 <option value="">请选择</option>
                                 <option value="常温">常温</option>
@@ -962,8 +1002,9 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="goodsLocation">货架位置*</label>
-                            <input type="text" id="goodsLocation" name="location" placeholder="如: A-3" required>
+                            <label for="goodsLocation">建议存放区域</label>
+                            <input type="text" id="goodsLocation" name="location" placeholder="如: A区">
+                            <div class="form-hint">建议的存放区域，非具体货架位置</div>
                         </div>
                     </div>
                     
@@ -978,36 +1019,187 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="goodsQuantity">商品数量*</label>
-                            <input type="number" id="goodsQuantity" name="goodsQuantity" min="1" value="1" required>
+                            <label for="goodsThreshold">库存预警阈值</label>
+                            <input type="number" id="goodsThreshold" name="threshold" min="0" value="10">
+                            <div class="form-hint">当库存低于此值时预警</div>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="storageDate">入库日期*</label>
-                            <input type="date" id="storageDate" name="storageDate" required>
+                            <label for="storageDate">默认入库日期</label>
+                            <input type="date" id="storageDate" name="storageDate">
+                            <div class="form-hint">默认入库日期（可选）</div>
                         </div>
                         <div class="form-group">
-                            <label for="expiryDate">过期日期*</label>
-                            <input type="date" id="expiryDate" name="expiryDate" required>
+                            <label for="expiryDate">默认保质期</label>
+                            <input type="date" id="expiryDate" name="expiryDate">
+                            <div class="form-hint">默认保质期（可选）</div>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="supplierName">供应商名称</label>
+                            <label for="supplierName">默认供应商名称</label>
                             <input type="text" id="supplierName" name="supplierName" placeholder="请输入供应商名称">
                         </div>
                         <div class="form-group">
-                            <label for="supplierContact">供应商联系方式</label>
+                            <label for="supplierContact">默认供应商联系方式</label>
                             <input type="text" id="supplierContact" name="supplierContact" placeholder="电话/邮箱">
                         </div>
                     </div>
                     
                     <div class="form-actions">
                         <button type="button" class="btn-cancel" id="cancelAddGoods">取消</button>
-                        <button type="submit" class="btn-submit" id="submitAddGoods">添加商品</button>
+                        <button type="submit" class="btn-submit" id="submitAddGoods">添加商品类型</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 库存管理模态框 -->
+    <div id="inventoryManagementModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>库存管理</h3>
+                <div class="modal-subtitle" id="inventoryGoodsName"></div>
+                <button class="modal-close" id="closeInventoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-note">
+                    <p><strong>四层库存管理系统：</strong>Area → Shelf → Level → Position</p>
+                </div>
+                
+                <div class="inventory-tabs">
+                    <button class="tab active" data-tab="inbound">入库</button>
+                    <button class="tab" data-tab="outbound">出库</button>
+                    <button class="tab" data-tab="move">位置调整</button>
+                </div>
+                
+                <!-- 入库表单 -->
+                <form id="inboundForm" class="inventory-form" style="display: block;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inboundQuantity">入库数量*</label>
+                            <input type="number" id="inboundQuantity" name="quantity" min="1" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="inboundShelfLevel">货架层*</label>
+                            <select id="inboundShelfLevel" name="shelfLevelId" required>
+                                <option value="">请选择货架层</option>
+                                <!-- 货架层选项将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inboundPosition">具体位置</label>
+                            <input type="text" id="inboundPosition" name="position" placeholder="如: 左前、右后等">
+                        </div>
+                        <div class="form-group">
+                            <label for="inboundBatchNumber">批次号</label>
+                            <input type="text" id="inboundBatchNumber" name="batchNumber" placeholder="批次编号">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="inboundStorageDate">入库日期</label>
+                            <input type="date" id="inboundStorageDate" name="storageDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="inboundExpiryDate">过期日期</label>
+                            <input type="date" id="inboundExpiryDate" name="expiryDate">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="cancelInbound">取消</button>
+                        <button type="submit" class="btn-submit">确认入库</button>
+                    </div>
+                </form>
+                
+                <!-- 出库表单 -->
+                <form id="outboundForm" class="inventory-form" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="outboundQuantity">出库数量*</label>
+                            <input type="number" id="outboundQuantity" name="quantity" min="1" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="outboundLocation">从哪个位置出库*</label>
+                            <select id="outboundLocation" name="locationId" required>
+                                <option value="">请选择库存位置</option>
+                                <!-- 库存位置选项将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="outboundReason">出库原因</label>
+                            <select id="outboundReason" name="reason">
+                                <option value="">请选择</option>
+                                <option value="销售">销售</option>
+                                <option value="退货">退货</option>
+                                <option value="损耗">损耗</option>
+                                <option value="调拨">调拨</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="outboundRemarks">备注</label>
+                            <input type="text" id="outboundRemarks" name="remarks" placeholder="出库备注">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="cancelOutbound">取消</button>
+                        <button type="submit" class="btn-submit">确认出库</button>
+                    </div>
+                </form>
+                
+                <!-- 位置调整表单 -->
+                <form id="moveForm" class="inventory-form" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="moveFromLocation">从哪个位置移动*</label>
+                            <select id="moveFromLocation" name="fromLocationId" required>
+                                <option value="">请选择源位置</option>
+                                <!-- 库存位置选项将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="moveQuantity">移动数量*</label>
+                            <input type="number" id="moveQuantity" name="quantity" min="1" value="1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="moveToShelfLevel">移动到哪个货架层*</label>
+                            <select id="moveToShelfLevel" name="toShelfLevelId" required>
+                                <option value="">请选择目标货架层</option>
+                                <!-- 货架层选项将通过JavaScript动态加载 -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="moveToPosition">目标位置</label>
+                            <input type="text" id="moveToPosition" name="position" placeholder="如: 左前、右后等">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="moveReason">移动原因</label>
+                            <input type="text" id="moveReason" name="reason" placeholder="移动原因">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="cancelMove">取消</button>
+                        <button type="submit" class="btn-submit">确认移动</button>
                     </div>
                 </form>
             </div>
@@ -1698,26 +1890,17 @@
                     storageTemperature: document.getElementById('storageTemperature').value,
                     location: document.getElementById('goodsLocation').value.trim(),
                     status: document.getElementById('goodsStatus').value,
-                    goodsQuantity: parseInt(document.getElementById('goodsQuantity').value),
-                    storageDate: document.getElementById('storageDate').value,
-                    expiryDate: document.getElementById('expiryDate').value,
+                    threshold: parseInt(document.getElementById('goodsThreshold').value) || 10,
+                    storageDate: document.getElementById('storageDate').value || null,
+                    expiryDate: document.getElementById('expiryDate').value || null,
                     supplierName: document.getElementById('supplierName').value.trim(),
                     supplierContact: document.getElementById('supplierContact').value.trim()
                 };
                 
                 // 验证必填字段
                 if (!formData.sku || !formData.name || !formData.storageTemperature || 
-                    !formData.location || !formData.status || !formData.goodsQuantity ||
-                    !formData.storageDate || !formData.expiryDate) {
+                    !formData.status) {
                     alert('请填写所有必填字段（带*号）');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = originalText;
-                    return;
-                }
-                
-                // 验证数量
-                if (formData.goodsQuantity <= 0) {
-                    alert('商品数量必须大于0');
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
                     return;
@@ -1813,18 +1996,25 @@
             
             goodsList.forEach(goods => {
                 const statusClass = goods.status === '正常' ? 'active' : 'inactive';
+                // 注意：商品列表中的quantity字段可能为0，因为库存是从inventory_location表计算的
+                const quantity = goods.quantity || 0;
+                const threshold = goods.threshold || 10;
+                const stockClass = quantity <= threshold ? 'low-stock' : '';
+                
                 html += '<tr>' +
                     '<td>' + (goods.id || 'N/A') + '</td>' +
                     '<td>' + (goods.sku || 'N/A') + '</td>' +
                     '<td>' + (goods.name || 'N/A') + '</td>' +
                     '<td>' + (goods.storageTemperature || 'N/A') + '</td>' +
                     '<td>' + (goods.location || 'N/A') + '</td>' +
-                    '<td>' + (goods.goodsQuantity || 0) + '</td>' +
+                    '<td class="' + stockClass + '">' + quantity + ' / ' + threshold + '</td>' +
                     '<td><span class="status ' + statusClass + '">' + (goods.status || '未知') + '</span></td>' +
                     '<td>' + (goods.storageDate || 'N/A') + '</td>' +
                     '<td>' + (goods.expiryDate || 'N/A') + '</td>' +
-                    '<td>' +
+                    '<td class="action-buttons">' +
                     '<button class="action-btn detail" data-id="' + goods.id + '" onclick="showGoodsDetail(' + goods.id + ')">详情</button>' +
+                    (appState.userRole === 'ADMIN' ? 
+                        '<button class="action-btn inventory" data-id="' + goods.id + '" onclick="showInventoryManagement(' + goods.id + ')">库存</button>' : '') +
                     '<button class="action-btn" data-id="' + goods.id + '">编辑</button>' +
                     '<button class="action-btn delete" data-id="' + goods.id + '">删除</button>' +
                     '</td>' +
@@ -1994,6 +2184,301 @@
             }
         }
         
+        // ========== 库存管理功能 ==========
+        
+        let currentGoodsId = null;
+        
+        async function showInventoryManagement(goodsId) {
+            currentGoodsId = goodsId;
+            
+            // 检查用户权限（只有ADMIN可以管理库存）
+            if (appState.userRole !== 'ADMIN') {
+                alert('只有管理员可以管理库存！');
+                return;
+            }
+            
+            try {
+                // 获取商品信息
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/goods/' + goodsId, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const goods = await response.json();
+                    document.getElementById('inventoryGoodsName').textContent = '商品: ' + goods.name;
+                    
+                    // 显示模态框
+                    document.getElementById('inventoryManagementModal').style.display = 'flex';
+                    
+                    // 初始化表单
+                    initInventoryForms();
+                } else {
+                    alert('获取商品信息失败');
+                }
+            } catch (error) {
+                console.error('获取商品信息错误:', error);
+                alert('网络错误，请检查连接');
+            }
+        }
+        
+        function initInventoryForms() {
+            // 设置默认日期
+            const today = new Date().toISOString().split('T')[0];
+            const nextMonth = new Date();
+            nextMonth.setDate(nextMonth.getDate() + 30);
+            const nextMonthStr = nextMonth.toISOString().split('T')[0];
+            
+            document.getElementById('inboundStorageDate').value = today;
+            document.getElementById('inboundExpiryDate').value = nextMonthStr;
+            
+            // 加载货架层选项
+            loadShelfLevels();
+            
+            // 加载库存位置选项
+            loadInventoryLocations();
+            
+            // 绑定标签页切换
+            document.querySelectorAll('.inventory-tabs .tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 更新激活状态
+                    document.querySelectorAll('.inventory-tabs .tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // 显示对应的表单
+                    document.querySelectorAll('.inventory-form').forEach(form => {
+                        form.style.display = 'none';
+                    });
+                    document.getElementById(tabId + 'Form').style.display = 'block';
+                });
+            });
+            
+            // 绑定表单提交
+            document.getElementById('inboundForm').addEventListener('submit', handleInboundSubmit);
+            document.getElementById('outboundForm').addEventListener('submit', handleOutboundSubmit);
+            document.getElementById('moveForm').addEventListener('submit', handleMoveSubmit);
+            
+            // 绑定取消按钮
+            document.getElementById('closeInventoryModal').addEventListener('click', hideInventoryModal);
+            document.getElementById('cancelInbound').addEventListener('click', hideInventoryModal);
+            document.getElementById('cancelOutbound').addEventListener('click', hideInventoryModal);
+            document.getElementById('cancelMove').addEventListener('click', hideInventoryModal);
+            
+            // 点击模态框背景关闭
+            document.getElementById('inventoryManagementModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideInventoryModal();
+                }
+            });
+        }
+        
+        async function loadShelfLevels() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/shelf-levels', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const shelfLevels = await response.json();
+                    const inboundSelect = document.getElementById('inboundShelfLevel');
+                    const moveSelect = document.getElementById('moveToShelfLevel');
+                    
+                    // 清空选项
+                    inboundSelect.innerHTML = '<option value="">请选择货架层</option>';
+                    moveSelect.innerHTML = '<option value="">请选择目标货架层</option>';
+                    
+                    // 添加选项
+                    shelfLevels.forEach(level => {
+                        const optionText = level.shelfName + ' - ' + level.levelName + 
+                                         ' (容量: ' + level.capacity + ', 已用: ' + (level.currentQuantity || 0) + ')';
+                        const option = new Option(optionText, level.id);
+                        inboundSelect.add(option.cloneNode(true));
+                        moveSelect.add(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载货架层错误:', error);
+            }
+        }
+        
+        async function loadInventoryLocations() {
+            if (!currentGoodsId) return;
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/goods/' + currentGoodsId + '/locations', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const locations = await response.json();
+                    const outboundSelect = document.getElementById('outboundLocation');
+                    const moveSelect = document.getElementById('moveFromLocation');
+                    
+                    // 清空选项
+                    outboundSelect.innerHTML = '<option value="">请选择库存位置</option>';
+                    moveSelect.innerHTML = '<option value="">请选择源位置</option>';
+                    
+                    // 添加选项
+                    locations.forEach(location => {
+                        const optionText = location.shelfName + ' - ' + location.levelName + 
+                                         ' - ' + location.position + ' (数量: ' + location.quantity + ')';
+                        const option = new Option(optionText, location.id);
+                        outboundSelect.add(option.cloneNode(true));
+                        moveSelect.add(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载库存位置错误:', error);
+            }
+        }
+        
+        async function handleInboundSubmit(e) {
+            e.preventDefault();
+            
+            if (!currentGoodsId) return;
+            
+            const formData = {
+                goodsId: currentGoodsId,
+                shelfLevelId: document.getElementById('inboundShelfLevel').value,
+                quantity: parseInt(document.getElementById('inboundQuantity').value),
+                position: document.getElementById('inboundPosition').value,
+                batchNumber: document.getElementById('inboundBatchNumber').value,
+                storageDate: document.getElementById('inboundStorageDate').value,
+                expiryDate: document.getElementById('inboundExpiryDate').value
+            };
+            
+            // 验证
+            if (!formData.shelfLevelId || !formData.quantity || formData.quantity <= 0) {
+                alert('请填写完整的入库信息');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/inventory/inbound', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    alert('入库成功！');
+                    hideInventoryModal();
+                    loadGoodsData(); // 重新加载商品列表
+                } else {
+                    const errorData = await response.json();
+                    alert('入库失败: ' + (errorData.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('入库错误:', error);
+                alert('网络错误，请检查连接');
+            }
+        }
+        
+        async function handleOutboundSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                locationId: document.getElementById('outboundLocation').value,
+                quantity: parseInt(document.getElementById('outboundQuantity').value),
+                reason: document.getElementById('outboundReason').value,
+                remarks: document.getElementById('outboundRemarks').value
+            };
+            
+            // 验证
+            if (!formData.locationId || !formData.quantity || formData.quantity <= 0) {
+                alert('请填写完整的出库信息');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/inventory/outbound/' + formData.locationId + '?quantity=' + formData.quantity, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('出库成功！');
+                    hideInventoryModal();
+                    loadGoodsData(); // 重新加载商品列表
+                } else {
+                    const errorData = await response.json();
+                    alert('出库失败: ' + (errorData.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('出库错误:', error);
+                alert('网络错误，请检查连接');
+            }
+        }
+        
+        async function handleMoveSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                fromLocationId: document.getElementById('moveFromLocation').value,
+                toShelfLevelId: document.getElementById('moveToShelfLevel').value,
+                quantity: parseInt(document.getElementById('moveQuantity').value),
+                position: document.getElementById('moveToPosition').value,
+                reason: document.getElementById('moveReason').value
+            };
+            
+            // 验证
+            if (!formData.fromLocationId || !formData.toShelfLevelId || !formData.quantity || formData.quantity <= 0) {
+                alert('请填写完整的移动信息');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/inventory/move/' + formData.fromLocationId + 
+                                           '?toShelfLevelId=' + formData.toShelfLevelId + 
+                                           '&quantity=' + formData.quantity + 
+                                           '&position=' + encodeURIComponent(formData.position || ''), {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('库存移动成功！');
+                    hideInventoryModal();
+                    loadGoodsData(); // 重新加载商品列表
+                } else {
+                    const errorData = await response.json();
+                    alert('库存移动失败: ' + (errorData.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('库存移动错误:', error);
+                alert('网络错误，请检查连接');
+            }
+        }
+        
+        function hideInventoryModal() {
+            document.getElementById('inventoryManagementModal').style.display = 'none';
+            // 重置表单
+            document.getElementById('inboundForm').reset();
+            document.getElementById('outboundForm').reset();
+            document.getElementById('moveForm').reset();
+            currentGoodsId = null;
+        }
+        
         // 添加CSS样式
         const style = document.createElement('style');
         style.textContent = `
@@ -2024,6 +2509,33 @@
             }
             .detail-btn:hover {
                 background: #45a049;
+            }
+            .inventory-tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #e1e5e9;
+                padding-bottom: 10px;
+            }
+            .inventory-form {
+                padding-top: 20px;
+            }
+            .form-note {
+                background: #f0f7ff;
+                border-left: 4px solid #2196f3;
+                padding: 12px 16px;
+                margin-bottom: 20px;
+                border-radius: 4px;
+            }
+            .form-note p {
+                margin: 0;
+                color: #333;
+                font-size: 14px;
+            }
+            .modal-subtitle {
+                color: #666;
+                font-size: 14px;
+                margin-top: 5px;
             }
         `;
         document.head.appendChild(style);

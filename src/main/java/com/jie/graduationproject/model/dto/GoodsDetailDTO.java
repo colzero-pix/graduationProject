@@ -175,7 +175,8 @@ public class GoodsDetailDTO {
         dto.setExpiryDate(goods.getExpiryDate());
         dto.setSupplierName(goods.getSupplierName());
         dto.setSupplierContact(goods.getSupplierContact());
-        dto.setQuantity(goods.getQuantity());
+        // 注意：不设置quantity字段，因为quantity应该从inventory_location表计算
+        // dto.setQuantity(goods.getQuantity());
         dto.setThreshold(goods.getThreshold());
         dto.setLocation(goods.getLocation());
         dto.setCreatedAt(goods.getCreatedAt());

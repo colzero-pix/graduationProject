@@ -22,8 +22,8 @@ public class AddGoodsDTO {
     //货物状态（正常/待退货/残损）
     private String status;
 
-    //货物数量
-    private Integer goodsQuantity;
+    //库存预警阈值（低于此值提醒进货）
+    private Integer threshold;
 
     //入库日期，用于先进先出管理
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -80,12 +80,12 @@ public class AddGoodsDTO {
         this.status = status;
     }
 
-    public Integer getGoodsQuantity() {
-        return goodsQuantity;
+    public Integer getThreshold() {
+        return threshold;
     }
 
-    public void setGoodsQuantity(Integer goodsQuantity) {
-        this.goodsQuantity = goodsQuantity;
+    public void setThreshold(Integer threshold) {
+        this.threshold = threshold;
     }
 
     public LocalDate getStorageDate() {

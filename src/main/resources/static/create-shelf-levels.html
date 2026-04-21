@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建货架层级</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .shelf-list {
+            margin: 20px 0;
+        }
+        .shelf-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+        }
+        .shelf-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .shelf-details {
+            flex: 1;
+        }
+        .shelf-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+        .shelf-code {
+            color: #666;
+            font-size: 14px;
+        }
+        .shelf-stats {
+            color: #888;
+            font-size: 12px;
+        }
+        .create-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .create-btn:hover {
+            background: #45a049;
+        }
+        .create-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-left: 10px;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>创建货架层级</h1>
+        
+        <div class="message info">
+            <p>此页面用于为已存在的货架创建层级。每个货架需要根据其总层数（totalLevels）创建对应的货架层级（ShelfLevel）。</p>
+            <p>四层库存模型：Area → Shelf → Level → Position</p>
+        </div>
+        
+        <div id="messageArea"></div>
+        
+        <div class="shelf-list" id="shelfList">
+            <div>加载货架列表...</div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button id="createAllBtn" class="create-btn">为所有货架创建层级</button>
+            <button id="refreshBtn" style="margin-left: 10px; background: #6c757d;">刷新列表</button>
+        </div>
+    </div>
+
+    <script>
+        let authToken = '';
+        
+        // 尝试从主页面获取token
+        try {
+            authToken = localStorage.getItem('auth_token');
+        } catch (e) {
+            console.log('无法从localStorage获取token');
+        }
+        
+        // 如果没有token，提示用户登录
+        if (!authToken) {
+            document.getElementById('shelfList').innerHTML = `
+                <div class="message error">
+                    <p>请先登录系统，然后刷新此页面。</p>
+                    <p>或者将以下token粘贴到控制台并执行：</p>
+                    <pre>localStorage.setItem('auth_token', '你的token')</pre>
+                </div>
+            `;
+        } else {
+            loadShelves();
+        }
+        
+        async function loadShelves() {
+            try {
+                const response = await fetch('/store-keeper/shelves', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    const shelves = await response.json();
+                    renderShelves(shelves);
+                } else {
+                    showMessage('加载货架失败: ' + response.status, 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误: ' + error.message, 'error');
+            }
+        }
+        
+        function renderShelves(shelves) {
+            const shelfList = document.getElementById('shelfList');
+            
+            if (!shelves || shelves.length === 0) {
+                shelfList.innerHTML = '<div class="message info">暂无货架数据</div>';
+                return;
+            }
+            
+            let html = '';
+            shelves.forEach(shelf => {
+                const hasLevels = shelf.totalLevels > 0;
+                const levelsText = hasLevels ? `应有 ${shelf.totalLevels} 层` : '未设置层数';
+                
+                html += `
+                    <div class="shelf-item">
+                        <div class="shelf-info">
+                            <div class="shelf-details">
+                                <div class="shelf-name">${shelf.shelfName || '未命名'}</div>
+                                <div class="shelf-code">编号: ${shelf.shelfCode} | 区域: ${shelf.area} | 类型: ${shelf.shelfType}</div>
+                                <div class="shelf-stats">${levelsText} | 状态: ${shelf.status}</div>
+                            </div>
+                            <div>
+                                <button class="create-btn" onclick="createLevelsForShelf(${shelf.id}, ${shelf.totalLevels || 3})" ${!hasLevels ? 'disabled' : ''}>
+                                    创建层级
+                                </button>
+                                <span id="status-${shelf.id}" class="status"></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            shelfList.innerHTML = html;
+        }
+        
+        async function createLevelsForShelf(shelfId, totalLevels) {
+            const statusElement = document.getElementById('status-' + shelfId);
+            statusElement.textContent = '创建中...';
+            statusElement.className = 'status status-pending';
+            
+            try {
+                const response = await fetch(`/store-keeper/shelf-levels/create-for-shelf/${shelfId}?totalLevels=${totalLevels}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    statusElement.textContent = '成功';
+                    statusElement.className = 'status status-success';
+                    showMessage(`货架 ${shelfId} 的层级创建成功`, 'success');
+                } else {
+                    const data = await response.json();
+                    statusElement.textContent = '失败';
+                    statusElement.className = 'status status-error';
+                    showMessage(`创建失败: ${data.message || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                statusElement.textContent = '错误';
+                statusElement.className = 'status status-error';
+                showMessage(`网络错误: ${error.message}`, 'error');
+            }
+        }
+        
+        async function createAllLevels() {
+            const btn = document.getElementById('createAllBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '创建中...';
+            
+            try {
+                const response = await fetch('/store-keeper/shelves', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken
+                    }
+                });
+                
+                if (response.ok) {
+                    const shelves = await response.json();
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    for (const shelf of shelves) {
+                        if (shelf.totalLevels > 0) {
+                            try {
+                                const levelResponse = await fetch(`/store-keeper/shelf-levels/create-for-shelf/${shelf.id}?totalLevels=${shelf.totalLevels}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': 'Bearer ' + authToken
+                                    }
+                                });
+                                
+                                if (levelResponse.ok) {
+                                    successCount++;
+                                } else {
+                                    errorCount++;
+                                }
+                            } catch (e) {
+                                errorCount++;
+                            }
+                        }
+                    }
+                    
+                    showMessage(`完成！成功: ${successCount}, 失败: ${errorCount}`, 'success');
+                    loadShelves(); // 刷新列表
+                }
+            } catch (error) {
+                showMessage(`网络错误: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
+        function showMessage(message, type) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `
+                <div class="message ${type}">
+                    ${message}
+                </div>
+            `;
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 3000);
+        }
+        
+        // 绑定按钮事件
+        document.getElementById('createAllBtn').addEventListener('click', createAllLevels);
+        document.getElementById('refreshBtn').addEventListener('click', loadShelves);
+        
+        // 如果token是后来设置的，重新加载
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'auth_token') {
+                authToken = e.newValue;
+                if (authToken) {
+                    loadShelves();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

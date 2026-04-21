@@ -3,8 +3,10 @@ package com.jie.graduationproject.service.ShelfLevel.Impl;
 import com.jie.graduationproject.model.dto.ShelfLevelDTO;
 import com.jie.graduationproject.model.entity.Shelf;
 import com.jie.graduationproject.model.entity.ShelfLevel;
+import com.jie.graduationproject.model.entity.InventoryLocation;
 import com.jie.graduationproject.repository.ShelfLevelRepository;
 import com.jie.graduationproject.repository.ShelfRepository;
+import com.jie.graduationproject.repository.InventoryLocationRepository;
 import com.jie.graduationproject.service.ShelfLevel.ShelfLevelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,11 +24,15 @@ public class ShelfLevelServiceImpl implements ShelfLevelService {
 
     private final ShelfLevelRepository shelfLevelRepository;
     private final ShelfRepository shelfRepository;
+    private final InventoryLocationRepository inventoryLocationRepository;
 
     @Autowired
-    public ShelfLevelServiceImpl(ShelfLevelRepository shelfLevelRepository, ShelfRepository shelfRepository) {
+    public ShelfLevelServiceImpl(ShelfLevelRepository shelfLevelRepository, 
+                                 ShelfRepository shelfRepository,
+                                 InventoryLocationRepository inventoryLocationRepository) {
         this.shelfLevelRepository = shelfLevelRepository;
         this.shelfRepository = shelfRepository;
+        this.inventoryLocationRepository = inventoryLocationRepository;
     }
 
     @Override
@@ -418,6 +424,101 @@ public class ShelfLevelServiceImpl implements ShelfLevelService {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> getSuitableLevelsForGoods(Long goodsId, String storageTemperature) {
+        try {
+            // 1. 根据存储温度要求筛选合适的货架区域
+            // 存储温度与货架区域的映射关系
+            Map<String, List<String>> temperatureToAreaMap = new HashMap<>();
+            temperatureToAreaMap.put("常温", Arrays.asList("常温区", "干货区"));
+            temperatureToAreaMap.put("冷藏", Arrays.asList("冷藏区"));
+            temperatureToAreaMap.put("冷冻", Arrays.asList("冷冻区"));
+            
+            List<String> suitableAreas = temperatureToAreaMap.getOrDefault(storageTemperature, 
+                    Arrays.asList("常温区", "干货区")); // 默认值
+            
+            // 2. 查询符合条件的货架层
+            List<ShelfLevel> allLevels = shelfLevelRepository.findAll();
+            
+            // 3. 筛选合适的货架层
+            List<Map<String, Object>> suitableLevels = new ArrayList<>();
+            
+            for (ShelfLevel level : allLevels) {
+                Shelf shelf = level.getShelf();
+                
+                // 检查区域是否合适
+                if (!suitableAreas.contains(shelf.getArea())) {
+                    continue;
+                }
+                
+                // 检查货架状态
+                if (!"正常".equals(shelf.getStatus())) {
+                    continue;
+                }
+                
+                // 检查货架层状态
+                if (!"空闲".equals(level.getStatus()) && !"部分占用".equals(level.getStatus())) {
+                    continue;
+                }
+                
+                // 计算剩余容量
+                int remainingCapacity = level.getRemainingCapacity();
+                if (remainingCapacity <= 0) {
+                    continue;
+                }
+                
+                // 检查该货架层是否已经存储了相同的商品
+                boolean hasSameGoods = false;
+                if (goodsId != null) {
+                    hasSameGoods = inventoryLocationRepository.existsByGoodsIdAndShelfLevelIdAndStatus(goodsId, level.getId(), "正常");
+                }
+                
+                // 创建返回对象
+                Map<String, Object> levelInfo = new HashMap<>();
+                levelInfo.put("id", level.getId());
+                levelInfo.put("shelfId", shelf.getId());
+                levelInfo.put("shelfCode", shelf.getShelfCode());
+                levelInfo.put("shelfName", shelf.getShelfName());
+                levelInfo.put("area", shelf.getArea());
+                levelInfo.put("shelfType", shelf.getShelfType());
+                levelInfo.put("levelId", level.getId());
+                levelInfo.put("levelName", level.getLevelName());
+                levelInfo.put("levelNumber", level.getLevelNumber());
+                levelInfo.put("capacity", level.getCapacity());
+                levelInfo.put("currentQuantity", level.getCurrentQuantity());
+                levelInfo.put("remainingCapacity", remainingCapacity);
+                levelInfo.put("hasSameGoods", hasSameGoods);
+                levelInfo.put("status", level.getStatus());
+                
+                suitableLevels.add(levelInfo);
+            }
+            
+            // 4. 排序：先按是否有相同商品排序，再按剩余容量排序
+            suitableLevels.sort((a, b) -> {
+                boolean aHasSameGoods = (boolean) a.get("hasSameGoods");
+                boolean bHasSameGoods = (boolean) b.get("hasSameGoods");
+                
+                // 优先显示有相同商品的位置
+                if (aHasSameGoods && !bHasSameGoods) {
+                    return -1;
+                } else if (!aHasSameGoods && bHasSameGoods) {
+                    return 1;
+                } else {
+                    // 都有或都没有相同商品，按剩余容量从大到小排序
+                    int aRemaining = (int) a.get("remainingCapacity");
+                    int bRemaining = (int) b.get("remainingCapacity");
+                    return Integer.compare(bRemaining, aRemaining);
+                }
+            });
+            
+            return ResponseEntity.ok(suitableLevels);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("查询合适货架层失败: " + e.getMessage());
         }
     }
 }

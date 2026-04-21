@@ -47,4 +47,9 @@ public interface InventoryLocationService {
     
     // 批量更新库存状态
     ResponseEntity<?> batchUpdateStatus(List<Long> locationIds, String status);
+    
+    // 创建库存位置（为已存在商品入库）
+    ResponseEntity<?> createInventoryLocation(Long goodsId, Long shelfLevelId, Integer quantity, 
+                                            String position, String batchNumber, 
+                                            String storageDate, String expiryDate);
 }

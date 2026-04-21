@@ -1,8 +1,5 @@
 package com.jie.graduationproject.model.dto;
 
-import lombok.Data;
-
-@Data
 public class AddShelfDTO {
 
     //货架编号（如：A-01、B-02）
@@ -52,4 +49,133 @@ public class AddShelfDTO {
 
     //主要存放的商品类别（如：饮料、零食、日用品）
     private String mainCategory;
+
+    // Getter和Setter方法
+    public String getShelfCode() {
+        return shelfCode;
+    }
+
+    public void setShelfCode(String shelfCode) {
+        this.shelfCode = shelfCode;
+    }
+
+    public String getShelfName() {
+        return shelfName;
+    }
+
+    public void setShelfName(String shelfName) {
+        this.shelfName = shelfName;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getShelfType() {
+        return shelfType;
+    }
+
+    public void setShelfType(String shelfType) {
+        this.shelfType = shelfType;
+    }
+
+    public String getLocationDesc() {
+        return locationDesc;
+    }
+
+    public void setLocationDesc(String locationDesc) {
+        this.locationDesc = locationDesc;
+    }
+
+    public Integer getFloor() {
+        return floor;
+    }
+
+    public void setFloor(Integer floor) {
+        this.floor = floor;
+    }
+
+    public Integer getTotalLevels() {
+        return totalLevels;
+    }
+
+    public void setTotalLevels(Integer totalLevels) {
+        this.totalLevels = totalLevels;
+    }
+
+    public Double getLevelHeight() {
+        return levelHeight;
+    }
+
+    public void setLevelHeight(Double levelHeight) {
+        this.levelHeight = levelHeight;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public Double getDepth() {
+        return depth;
+    }
+
+    public void setDepth(Double depth) {
+        this.depth = depth;
+    }
+
+    public Double getMaxWeight() {
+        return maxWeight;
+    }
+
+    public void setMaxWeight(Double maxWeight) {
+        this.maxWeight = maxWeight;
+    }
+
+    public Integer getProductTypesCount() {
+        return productTypesCount;
+    }
+
+    public void setProductTypesCount(Integer productTypesCount) {
+        this.productTypesCount = productTypesCount;
+    }
+
+    public Integer getTotalQuantity() {
+        return totalQuantity;
+    }
+
+    public void setTotalQuantity(Integer totalQuantity) {
+        this.totalQuantity = totalQuantity;
+    }
+
+    public Boolean getIsBottomForHeavy() {
+        return isBottomForHeavy;
+    }
+
+    public void setIsBottomForHeavy(Boolean isBottomForHeavy) {
+        this.isBottomForHeavy = isBottomForHeavy;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMainCategory() {
+        return mainCategory;
+    }
+
+    public void setMainCategory(String mainCategory) {
+        this.mainCategory = mainCategory;
+    }
 }

@@ -8,6 +8,7 @@ import com.jie.graduationproject.model.entity.Shelf;
 import com.jie.graduationproject.repository.GoodsRepository;
 import com.jie.graduationproject.repository.ShelfRepository;
 import com.jie.graduationproject.service.Shelf.ShelfService;
+import com.jie.graduationproject.service.ShelfLevel.ShelfLevelService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,9 @@ public class ShelfServiceImpl implements ShelfService {
     
     @Autowired
     private GoodsRepository goodsRepository;
+    
+    @Autowired
+    private ShelfLevelService shelfLevelService;
 
     @Override
     @Transactional
@@ -59,6 +63,17 @@ public class ShelfServiceImpl implements ShelfService {
             shelf.setUpdatedAt(LocalDateTime.now());
             
             Shelf savedShelf = shelfRepository.save(shelf);
+            
+            // 自动创建货架层级
+            if (savedShelf.getTotalLevels() != null && savedShelf.getTotalLevels() > 0) {
+                try {
+                    shelfLevelService.createLevelsForShelf(savedShelf.getId(), savedShelf.getTotalLevels());
+                } catch (Exception e) {
+                    // 如果创建层级失败，记录错误但不影响货架创建
+                    System.err.println("创建货架层级失败: " + e.getMessage());
+                }
+            }
+            
             return ResponseEntity.status(HttpStatus.CREATED).body(savedShelf);
             
         } catch (Exception e) {

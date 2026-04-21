@@ -1058,6 +1058,132 @@
         </div>
     </div>
     
+    <!-- 添加货架模态框 -->
+    <div id="addShelfModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>添加货架</h3>
+                <div class="modal-subtitle">添加新的货架到仓库管理系统</div>
+                <button class="modal-close" id="closeAddShelfModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addShelfForm">
+                    <div class="form-note">
+                        <p><strong>注意：</strong>货架是四层库存管理系统的基础，添加货架后可以为其创建层级。</p>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="shelfCode">货架编号*</label>
+                            <input type="text" id="shelfCode" name="shelfCode" placeholder="如: A-01、B-02" required>
+                            <div class="form-hint">货架的唯一标识，不能重复</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="shelfName">货架名称*</label>
+                            <input type="text" id="shelfName" name="shelfName" placeholder="如: 饮料区货架A" required>
+                            <div class="form-hint">便于识别的货架名称</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="area">所属区域*</label>
+                            <select id="area" name="area" required>
+                                <option value="">请选择区域</option>
+                                <option value="常温区">常温区</option>
+                                <option value="冷藏区">冷藏区</option>
+                                <option value="冷冻区">冷冻区</option>
+                                <option value="干货区">干货区</option>
+                                <option value="生鲜区">生鲜区</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="shelfType">货架类型*</label>
+                            <select id="shelfType" name="shelfType" required>
+                                <option value="">请选择类型</option>
+                                <option value="高频快消区">高频快消区</option>
+                                <option value="中频干货区">中频干货区</option>
+                                <option value="低频重物区">低频重物区</option>
+                                <option value="促销展示区">促销展示区</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="locationDesc">位置描述</label>
+                            <input type="text" id="locationDesc" name="locationDesc" placeholder="如: 靠交通要道、靠窗、角落等">
+                        </div>
+                        <div class="form-group">
+                            <label for="floor">所在楼层</label>
+                            <input type="number" id="floor" name="floor" min="1" value="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="totalLevels">货架总层数*</label>
+                            <input type="number" id="totalLevels" name="totalLevels" min="1" max="10" value="5" required>
+                            <div class="form-hint">货架的总层级数量，建议3-8层</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="levelHeight">每层高度(cm)</label>
+                            <input type="number" id="levelHeight" name="levelHeight" min="20" max="100" value="40" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="length">货架长度(cm)</label>
+                            <input type="number" id="length" name="length" min="50" max="300" value="120" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="depth">货架深度(cm)</label>
+                            <input type="number" id="depth" name="depth" min="30" max="100" value="50" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="maxWeight">最大承重(kg)</label>
+                            <input type="number" id="maxWeight" name="maxWeight" min="50" max="1000" value="200" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="mainCategory">主要商品类别</label>
+                            <input type="text" id="mainCategory" name="mainCategory" placeholder="如: 饮料、零食、日用品">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="isBottomForHeavy">底层放重物</label>
+                            <select id="isBottomForHeavy" name="isBottomForHeavy">
+                                <option value="false">否</option>
+                                <option value="true">是</option>
+                            </select>
+                            <div class="form-hint">最下层是否用于存放重物</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="status">货架状态*</label>
+                            <select id="status" name="status" required>
+                                <option value="">请选择状态</option>
+                                <option value="正常">正常</option>
+                                <option value="维修中">维修中</option>
+                                <option value="已满">已满</option>
+                                <option value="空置">空置</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="cancelAddShelf">取消</button>
+                        <button type="submit" class="btn-submit" id="submitAddShelf">添加货架</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <!-- 库存管理模态框 -->
     <div id="inventoryManagementModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 600px;">
@@ -1582,9 +1708,10 @@
             contentElement.innerHTML = template.innerHTML;
             
             // 绑定添加货架按钮事件
-            document.getElementById('addShelfBtn').addEventListener('click', function() {
-                alert('添加货架功能开发中...');
-            });
+            document.getElementById('addShelfBtn').addEventListener('click', showAddShelfModal);
+            
+            // 初始化货架表单事件
+            initShelfFormEvents();
             
             // 加载货架数据
             loadShelvesData();
@@ -2224,7 +2351,7 @@
             }
         }
         
-        function initInventoryForms() {
+        async function initInventoryForms() {
             // 设置默认日期
             const today = new Date().toISOString().split('T')[0];
             const nextMonth = new Date();
@@ -2234,8 +2361,28 @@
             document.getElementById('inboundStorageDate').value = today;
             document.getElementById('inboundExpiryDate').value = nextMonthStr;
             
-            // 加载货架层选项
-            loadShelfLevels();
+            try {
+                // 先获取商品信息，以便根据商品类型加载合适的货架层
+                const token = localStorage.getItem('auth_token');
+                const goodsResponse = await fetch('/store-keeper/goods/' + currentGoodsId, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (goodsResponse.ok) {
+                    const goods = await goodsResponse.json();
+                    // 根据商品信息加载合适的货架层
+                    await loadSuitableShelfLevels(goods);
+                } else {
+                    // 如果获取商品信息失败，加载所有货架层
+                    await loadShelfLevels();
+                }
+            } catch (error) {
+                console.error('获取商品信息错误:', error);
+                // 出错时加载所有货架层
+                await loadShelfLevels();
+            }
             
             // 加载库存位置选项
             loadInventoryLocations();
@@ -2308,6 +2455,95 @@
             }
         }
         
+        async function loadSuitableShelfLevels(goods) {
+            try {
+                const token = localStorage.getItem('auth_token');
+                
+                // 根据商品信息查询合适的货架层
+                // 这里需要调用一个新的API端点，根据商品ID和存储温度要求查询合适的货架层
+                const response = await fetch(`/store-keeper/shelf-levels/suitable?goodsId=${currentGoodsId}&storageTemperature=${encodeURIComponent(goods.storageTemperature || '')}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const suitableLevels = await response.json();
+                    const inboundSelect = document.getElementById('inboundShelfLevel');
+                    
+                    // 清空选项
+                    inboundSelect.innerHTML = '<option value="">请选择存放位置</option>';
+                    
+                    if (suitableLevels.length === 0) {
+                        inboundSelect.innerHTML = '<option value="">暂无合适的存放位置，请先添加货架</option>';
+                        return;
+                    }
+                    
+                    // 分组显示：已存相同商品的位置、空的位置
+                    let hasExistingLocations = false;
+                    let hasEmptyLocations = false;
+                    
+                    // 先显示已存相同商品的位置
+                    suitableLevels.forEach(level => {
+                        if (level.hasSameGoods) {
+                            hasExistingLocations = true;
+                            const remainingCapacity = level.capacity - (level.currentQuantity || 0);
+                            const optionText = `📦 ${level.shelfName} - ${level.levelName} (已有${level.currentQuantity || 0}件，还可放${remainingCapacity}件)`;
+                            const option = new Option(optionText, level.id);
+                            option.setAttribute('data-type', 'existing');
+                            inboundSelect.add(option);
+                        }
+                    });
+                    
+                    // 添加分隔线（如果有已存位置和空位置）
+                    if (hasExistingLocations) {
+                        suitableLevels.forEach(level => {
+                            if (!level.hasSameGoods && level.currentQuantity === 0) {
+                                hasEmptyLocations = true;
+                            }
+                        });
+                        
+                        if (hasEmptyLocations) {
+                            const separator = new Option('────────── 空位置 ──────────', '');
+                            separator.disabled = true;
+                            inboundSelect.add(separator);
+                        }
+                    }
+                    
+                    // 显示空的位置
+                    suitableLevels.forEach(level => {
+                        if (!level.hasSameGoods && level.currentQuantity === 0) {
+                            const optionText = `📭 ${level.shelfName} - ${level.levelName} (空，容量: ${level.capacity})`;
+                            const option = new Option(optionText, level.id);
+                            option.setAttribute('data-type', 'empty');
+                            inboundSelect.add(option);
+                        }
+                    });
+                    
+                    // 如果没有合适的空位置，显示部分占用的位置
+                    if (!hasEmptyLocations) {
+                        suitableLevels.forEach(level => {
+                            if (!level.hasSameGoods && level.currentQuantity > 0 && level.currentQuantity < level.capacity) {
+                                const remainingCapacity = level.capacity - level.currentQuantity;
+                                const optionText = `📊 ${level.shelfName} - ${level.levelName} (已有其他商品${level.currentQuantity}件，还可放${remainingCapacity}件)`;
+                                const option = new Option(optionText, level.id);
+                                option.setAttribute('data-type', 'partial');
+                                inboundSelect.add(option);
+                            }
+                        });
+                    }
+                    
+                } else {
+                    // 如果新API不可用，回退到加载所有货架层
+                    await loadShelfLevels();
+                }
+            } catch (error) {
+                console.error('加载合适货架层错误:', error);
+                // 出错时加载所有货架层
+                await loadShelfLevels();
+            }
+        }
+        
         async function loadInventoryLocations() {
             if (!currentGoodsId) return;
             
@@ -2365,7 +2601,7 @@
             
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/store-keeper/inventory/inbound', {
+                const response = await fetch('/store-keeper/inventory/add', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2477,6 +2713,253 @@
             document.getElementById('outboundForm').reset();
             document.getElementById('moveForm').reset();
             currentGoodsId = null;
+        }
+        
+        // ========== 货架管理功能 ==========
+        
+        function initShelfFormEvents() {
+            // 绑定添加货架表单提交
+            document.getElementById('addShelfForm').addEventListener('submit', handleAddShelfSubmit);
+            
+            // 绑定模态框关闭按钮
+            document.getElementById('closeAddShelfModal').addEventListener('click', hideAddShelfModal);
+            document.getElementById('cancelAddShelf').addEventListener('click', hideAddShelfModal);
+            
+            // 点击模态框背景关闭
+            document.getElementById('addShelfModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideAddShelfModal();
+                }
+            });
+        }
+        
+        function showAddShelfModal() {
+            // 检查用户权限（只有ADMIN可以添加货架）
+            if (appState.userRole !== 'ADMIN') {
+                alert('只有管理员可以添加货架！');
+                return;
+            }
+            
+            document.getElementById('addShelfModal').style.display = 'flex';
+            // 重置表单
+            document.getElementById('addShelfForm').reset();
+            
+            // 设置默认值
+            document.getElementById('totalLevels').value = 5;
+            document.getElementById('levelHeight').value = 40;
+            document.getElementById('length').value = 120;
+            document.getElementById('depth').value = 50;
+            document.getElementById('maxWeight').value = 200;
+            document.getElementById('floor').value = 1;
+            document.getElementById('isBottomForHeavy').value = 'false';
+            document.getElementById('status').value = '正常';
+        }
+        
+        function hideAddShelfModal() {
+            document.getElementById('addShelfModal').style.display = 'none';
+        }
+        
+        async function handleAddShelfSubmit(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitAddShelf');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                // 禁用提交按钮
+                submitBtn.disabled = true;
+                submitBtn.textContent = '添加中...';
+                
+                // 获取表单数据
+                const formData = {
+                    shelfCode: document.getElementById('shelfCode').value.trim(),
+                    shelfName: document.getElementById('shelfName').value.trim(),
+                    area: document.getElementById('area').value,
+                    shelfType: document.getElementById('shelfType').value,
+                    locationDesc: document.getElementById('locationDesc').value.trim(),
+                    floor: parseInt(document.getElementById('floor').value) || 1,
+                    totalLevels: parseInt(document.getElementById('totalLevels').value),
+                    levelHeight: parseFloat(document.getElementById('levelHeight').value) || 40,
+                    length: parseFloat(document.getElementById('length').value) || 120,
+                    depth: parseFloat(document.getElementById('depth').value) || 50,
+                    maxWeight: parseFloat(document.getElementById('maxWeight').value) || 200,
+                    productTypesCount: 0,
+                    totalQuantity: 0,
+                    isBottomForHeavy: document.getElementById('isBottomForHeavy').value === 'true',
+                    status: document.getElementById('status').value,
+                    mainCategory: document.getElementById('mainCategory').value.trim()
+                };
+                
+                // 验证必填字段
+                if (!formData.shelfCode || !formData.shelfName || !formData.area || 
+                    !formData.shelfType || !formData.totalLevels || !formData.status) {
+                    alert('请填写所有必填字段（带*号）');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    return;
+                }
+                
+                // 验证货架编号格式（简单验证）
+                if (!/^[A-Za-z]-\d{2,3}$/.test(formData.shelfCode)) {
+                    alert('货架编号格式不正确，应为字母-数字格式，如：A-01、B-102');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    return;
+                }
+                
+                // 验证数值范围
+                if (formData.totalLevels < 1 || formData.totalLevels > 10) {
+                    alert('货架总层数应在1-10层之间');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    return;
+                }
+                
+                // 发送API请求
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/shelves', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('货架添加成功！');
+                    hideAddShelfModal();
+                    // 重新加载货架数据
+                    loadShelvesData();
+                } else {
+                    alert('货架添加失败: ' + (data.message || '未知错误'));
+                }
+                
+            } catch (error) {
+                console.error('添加货架错误:', error);
+                alert('网络错误，请检查连接');
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+        
+        async function loadShelvesData() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/shelves', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (response.ok) {
+                    const shelves = await response.json();
+                    renderShelvesTable(shelves);
+                } else {
+                    const shelfTable = document.getElementById('shelfTable');
+                    shelfTable.innerHTML = '<div class="no-data">加载货架数据失败</div>';
+                }
+            } catch (error) {
+                console.error('加载货架数据错误:', error);
+                const shelfTable = document.getElementById('shelfTable');
+                shelfTable.innerHTML = '<div class="no-data">网络错误，请检查连接</div>';
+            }
+        }
+        
+        function renderShelvesTable(shelves) {
+            const shelfTable = document.getElementById('shelfTable');
+            
+            if (!shelves || shelves.length === 0) {
+                shelfTable.innerHTML = '<div class="no-data">暂无货架数据</div>';
+                return;
+            }
+            
+            let html = '<table><thead><tr>' +
+                '<th>货架ID</th>' +
+                '<th>货架编号</th>' +
+                '<th>货架名称</th>' +
+                '<th>区域</th>' +
+                '<th>类型</th>' +
+                '<th>总层数</th>' +
+                '<th>商品种类</th>' +
+                '<th>总数量</th>' +
+                '<th>状态</th>' +
+                '<th>操作</th>' +
+                '</tr></thead><tbody>';
+            
+            shelves.forEach(shelf => {
+                const statusClass = shelf.status === '正常' ? 'active' : 'inactive';
+                const statusText = shelf.status || '未知';
+                
+                html += '<tr>' +
+                    '<td>' + (shelf.id || 'N/A') + '</td>' +
+                    '<td>' + (shelf.shelfCode || 'N/A') + '</td>' +
+                    '<td>' + (shelf.shelfName || 'N/A') + '</td>' +
+                    '<td>' + (shelf.area || 'N/A') + '</td>' +
+                    '<td>' + (shelf.shelfType || 'N/A') + '</td>' +
+                    '<td>' + (shelf.totalLevels || 0) + '</td>' +
+                    '<td>' + (shelf.productTypesCount || 0) + '</td>' +
+                    '<td>' + (shelf.totalQuantity || 0) + '</td>' +
+                    '<td><span class="status ' + statusClass + '">' + statusText + '</span></td>' +
+                    '<td>' +
+                    '<button class="action-btn" data-id="' + shelf.id + '">编辑</button>' +
+                    '<button class="action-btn delete" data-id="' + shelf.id + '">删除</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+            
+            html += '</tbody></table>';
+            shelfTable.innerHTML = html;
+            
+            // 绑定操作按钮事件
+            bindShelfTableActions();
+        }
+        
+        function bindShelfTableActions() {
+            // 绑定编辑按钮
+            document.querySelectorAll('#shelfTable .action-btn:not(.delete)').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const shelfId = this.getAttribute('data-id');
+                    alert('编辑货架功能开发中，货架ID: ' + shelfId);
+                });
+            });
+            
+            // 绑定删除按钮
+            document.querySelectorAll('#shelfTable .action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const shelfId = this.getAttribute('data-id');
+                    
+                    if (!confirm('确定要删除这个货架吗？此操作不可撤销。')) {
+                        return;
+                    }
+                    
+                    try {
+                        const token = localStorage.getItem('auth_token');
+                        const response = await fetch('/store-keeper/shelves/' + shelfId, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': 'Bearer ' + token
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            alert('货架删除成功！');
+                            // 重新加载货架列表
+                            loadShelvesData();
+                        } else {
+                            const data = await response.json();
+                            alert('删除失败: ' + (data.message || '未知错误'));
+                        }
+                    } catch (error) {
+                        console.error('删除货架错误:', error);
+                        alert('网络错误，请检查连接');
+                    }
+                });
+            });
         }
         
         // 添加CSS样式

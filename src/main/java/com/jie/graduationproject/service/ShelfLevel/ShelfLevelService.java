@@ -47,4 +47,7 @@ public interface ShelfLevelService {
     
     // 获取推荐存放位置
     List<ShelfLevelDTO> getRecommendedLevels(String area, String shelfType, Integer requiredQuantity);
+    
+    // 获取适合商品的货架层
+    ResponseEntity<?> getSuitableLevelsForGoods(Long goodsId, String storageTemperature);
 }

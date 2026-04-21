@@ -16,12 +16,15 @@ import com.jie.graduationproject.service.Shelf.Impl.ShelfServiceImpl;
 import com.jie.graduationproject.service.ShelfLevel.ShelfLevelService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/store-keeper")
@@ -199,6 +202,15 @@ public class StoreKeeperController {
         return shelfLevelService.getShelfLevels(shelfId);
     }
     
+    // 为货架创建层级
+    @PostMapping("/shelf-levels/create-for-shelf/{shelfId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createLevelsForShelf(
+            @PathVariable Long shelfId,
+            @RequestParam Integer totalLevels) {
+        return shelfLevelService.createLevelsForShelf(shelfId, totalLevels);
+    }
+    
     // 获取货架层详情
     @GetMapping("/shelf-levels/{levelId}")
     @PreAuthorize("isAuthenticated()")
@@ -220,6 +232,15 @@ public class StoreKeeperController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getShelfLevelStatistics(@PathVariable Long levelId) {
         return shelfLevelService.getShelfLevelStatistics(levelId);
+    }
+    
+    // 获取适合商品的货架层
+    @GetMapping("/shelf-levels/suitable")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getSuitableLevelsForGoods(
+            @RequestParam Long goodsId,
+            @RequestParam(required = false) String storageTemperature) {
+        return shelfLevelService.getSuitableLevelsForGoods(goodsId, storageTemperature);
     }
 
     // ========== 库存位置管理接口 ==========
@@ -265,13 +286,36 @@ public class StoreKeeperController {
         return inventoryLocationService.outboundInventory(locationId, quantity);
     }
     
-    // 入库
+    // 入库（添加到现有库存位置）
     @PostMapping("/inventory/inbound")
     @PreAuthorize("hasRole('ADMIN') or hasRole('STORE_KEEPER')")
     public ResponseEntity<?> inboundInventory(
             @RequestParam Long locationId,
             @RequestParam Integer quantity) {
         return inventoryLocationService.inboundInventory(locationId, quantity);
+    }
+    
+    // 新商品入库（创建新的库存位置）
+    @PostMapping("/inventory/add")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> addInventory(@RequestBody Map<String, Object> request) {
+        try {
+            Long goodsId = Long.parseLong(request.get("goodsId").toString());
+            Long shelfLevelId = Long.parseLong(request.get("shelfLevelId").toString());
+            Integer quantity = Integer.parseInt(request.get("quantity").toString());
+            String position = (String) request.get("position");
+            String batchNumber = (String) request.get("batchNumber");
+            String storageDateStr = (String) request.get("storageDate");
+            String expiryDateStr = (String) request.get("expiryDate");
+            
+            // 直接调用服务方法创建库存位置
+            return inventoryLocationService.createInventoryLocation(goodsId, shelfLevelId, quantity, 
+                    position, batchNumber, storageDateStr, expiryDateStr);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("请求参数错误: " + e.getMessage());
+        }
     }
     
     // 更新库存位置信息

@@ -940,4 +940,86 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
                     .body("批量更新状态失败: " + e.getMessage());
         }
     }
+
+    @Override
+    public ResponseEntity<?> createInventoryLocation(Long goodsId, Long shelfLevelId, Integer quantity,
+                                                    String position, String batchNumber,
+                                                    String storageDateStr, String expiryDateStr) {
+        try {
+            // 检查商品是否存在
+            Optional<Goods> optionalGoods = goodsRepository.findById(goodsId);
+            if (optionalGoods.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("商品不存在");
+            }
+            
+            // 检查货架层是否存在
+            Optional<ShelfLevel> optionalLevel = shelfLevelRepository.findById(shelfLevelId);
+            if (optionalLevel.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("货架层不存在");
+            }
+            
+            Goods goods = optionalGoods.get();
+            ShelfLevel shelfLevel = optionalLevel.get();
+            
+            // 检查数量
+            if (quantity <= 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("入库数量必须大于0");
+            }
+            
+            // 检查货架层容量
+            if (!shelfLevelService.checkLevelCapacity(shelfLevelId, quantity)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("货架层容量不足");
+            }
+            
+            // 创建库存位置
+            InventoryLocation location = new InventoryLocation();
+            location.setGoods(goods);
+            location.setShelfLevel(shelfLevel);
+            location.setQuantity(quantity);
+            location.setPosition(position != null && !position.isEmpty() ? position : "默认位置");
+            location.setBatchNumber(batchNumber);
+            location.setStatus("正常");
+            
+            // 设置日期
+            if (storageDateStr != null && !storageDateStr.isEmpty()) {
+                location.setStorageDate(java.time.LocalDate.parse(storageDateStr));
+            } else {
+                location.setStorageDate(java.time.LocalDate.now());
+            }
+            
+            if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
+                location.setExpiryDate(java.time.LocalDate.parse(expiryDateStr));
+            }
+            
+            location.setCreatedAt(LocalDateTime.now());
+            location.setUpdatedAt(LocalDateTime.now());
+            
+            // 保存库存位置
+            InventoryLocation savedLocation = inventoryLocationRepository.save(location);
+            
+            // 更新货架层数量
+            shelfLevelService.updateLevelQuantity(shelfLevelId, quantity);
+            
+            // 更新商品总库存
+            goods.setQuantity(goods.getQuantity() + quantity);
+            goods.setUpdatedAt(LocalDateTime.now());
+            goodsRepository.save(goods);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "入库成功");
+            response.put("location", InventoryLocationDTO.fromEntity(savedLocation));
+            response.put("quantity", quantity);
+            response.put("total", savedLocation.getQuantity());
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("入库失败: " + e.getMessage());
+        }
+    }
 }

@@ -1184,6 +1184,141 @@
         </div>
     </div>
     
+    <!-- 编辑货架模态框 -->
+    <div id="editShelfModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>编辑货架</h3>
+                <div class="modal-subtitle">修改货架信息</div>
+                <button class="modal-close" id="closeEditShelfModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editShelfForm">
+                    <div class="form-note">
+                        <p><strong>注意：</strong>修改货架信息可能会影响库存管理。</p>
+                    </div>
+                    
+                    <input type="hidden" id="editShelfId" name="id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editShelfCode">货架编号*</label>
+                            <input type="text" id="editShelfCode" name="shelfCode" placeholder="如: A-01、B-02" required readonly>
+                            <div class="form-hint">货架编号不可修改</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="editShelfName">货架名称*</label>
+                            <input type="text" id="editShelfName" name="shelfName" placeholder="如: 饮料区货架A" required>
+                            <div class="form-hint">便于识别的货架名称</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editArea">所属区域*</label>
+                            <select id="editArea" name="area" required>
+                                <option value="">请选择区域</option>
+                                <option value="常温区">常温区</option>
+                                <option value="冷藏区">冷藏区</option>
+                                <option value="冷冻区">冷冻区</option>
+                                <option value="干货区">干货区</option>
+                                <option value="生鲜区">生鲜区</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editShelfType">货架类型*</label>
+                            <select id="editShelfType" name="shelfType" required>
+                                <option value="">请选择类型</option>
+                                <option value="高频快消区">高频快消区</option>
+                                <option value="中频干货区">中频干货区</option>
+                                <option value="低频重物区">低频重物区</option>
+                                <option value="促销展示区">促销展示区</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editLocationDesc">位置描述</label>
+                            <input type="text" id="editLocationDesc" name="locationDesc" placeholder="详细位置描述">
+                        </div>
+                        <div class="form-group">
+                            <label for="editFloor">所在楼层</label>
+                            <input type="number" id="editFloor" name="floor" min="1" max="10" value="1">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editTotalLevels">总层数*</label>
+                            <input type="number" id="editTotalLevels" name="totalLevels" min="1" max="10" value="3" required>
+                            <div class="form-hint">货架的总层数</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="editLevelHeight">层高 (cm)</label>
+                            <input type="number" id="editLevelHeight" name="levelHeight" min="10" max="200" step="0.1" value="40.0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editLength">长度 (cm)</label>
+                            <input type="number" id="editLength" name="length" min="10" max="500" step="0.1" value="120.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="editDepth">深度 (cm)</label>
+                            <input type="number" id="editDepth" name="depth" min="10" max="200" step="0.1" value="50.0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editMaxWeight">最大承重 (kg)</label>
+                            <input type="number" id="editMaxWeight" name="maxWeight" min="10" max="1000" step="0.1" value="200.0">
+                        </div>
+                        <div class="form-group">
+                            <label for="editMainCategory">主要品类</label>
+                            <input type="text" id="editMainCategory" name="mainCategory" placeholder="如: 饮料、零食">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editRemarks">备注</label>
+                            <textarea id="editRemarks" name="remarks" rows="3" placeholder="货架备注信息"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="editIsBottomForHeavy">底层放重物</label>
+                            <select id="editIsBottomForHeavy" name="isBottomForHeavy">
+                                <option value="false">否</option>
+                                <option value="true">是</option>
+                            </select>
+                            <div class="form-hint">最下层是否用于存放重物</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editStatus">货架状态*</label>
+                            <select id="editStatus" name="status" required>
+                                <option value="">请选择状态</option>
+                                <option value="正常">正常</option>
+                                <option value="维修中">维修中</option>
+                                <option value="已满">已满</option>
+                                <option value="空置">空置</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" id="cancelEditShelf">取消</button>
+                        <button type="submit" class="btn-submit" id="submitEditShelf">保存修改</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <!-- 库存管理模态框 -->
     <div id="inventoryManagementModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 600px;">
@@ -2759,6 +2894,405 @@
             document.getElementById('addShelfModal').style.display = 'none';
         }
         
+        // 货架编辑相关函数
+        async function openEditShelfModal(shelfId) {
+            // 检查用户权限（只有ADMIN和STORE_KEEPER可以编辑货架）
+            if (appState.userRole !== 'ADMIN' && appState.userRole !== 'STORE_KEEPER') {
+                alert('只有管理员和仓库管理员可以编辑货架！');
+                return;
+            }
+            
+            try {
+                // 显示加载状态
+                const modal = document.getElementById('editShelfModal');
+                modal.style.display = 'flex';
+                
+                // 先恢复模态框内容（确保表单存在）
+                const modalBody = modal.querySelector('.modal-body');
+                modalBody.innerHTML = `
+                    <form id="editShelfForm">
+                        <div class="form-note">
+                            <p><strong>注意：</strong>修改货架信息可能会影响库存管理。</p>
+                        </div>
+                        
+                        <input type="hidden" id="editShelfId" name="id">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editShelfCode">货架编号*</label>
+                                <input type="text" id="editShelfCode" name="shelfCode" placeholder="如: A-01、B-02" required readonly>
+                                <div class="form-hint">货架编号不可修改</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="editShelfName">货架名称*</label>
+                                <input type="text" id="editShelfName" name="shelfName" placeholder="如: 饮料区货架A" required>
+                                <div class="form-hint">便于识别的货架名称</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editArea">所属区域*</label>
+                                <select id="editArea" name="area" required>
+                                    <option value="">请选择区域</option>
+                                    <option value="常温区">常温区</option>
+                                    <option value="冷藏区">冷藏区</option>
+                                    <option value="冷冻区">冷冻区</option>
+                                    <option value="干货区">干货区</option>
+                                    <option value="生鲜区">生鲜区</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editShelfType">货架类型*</label>
+                                <select id="editShelfType" name="shelfType" required>
+                                    <option value="">请选择类型</option>
+                                    <option value="高频快消区">高频快消区</option>
+                                    <option value="中频干货区">中频干货区</option>
+                                    <option value="低频重物区">低频重物区</option>
+                                    <option value="促销展示区">促销展示区</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editLocationDesc">位置描述</label>
+                                <input type="text" id="editLocationDesc" name="locationDesc" placeholder="详细位置描述">
+                            </div>
+                            <div class="form-group">
+                                <label for="editFloor">所在楼层</label>
+                                <input type="number" id="editFloor" name="floor" min="1" max="10" value="1">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editTotalLevels">总层数*</label>
+                                <input type="number" id="editTotalLevels" name="totalLevels" min="1" max="10" value="3" required>
+                                <div class="form-hint">货架的总层数</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="editLevelHeight">层高 (cm)</label>
+                                <input type="number" id="editLevelHeight" name="levelHeight" min="10" max="200" step="0.1" value="40.0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editLength">长度 (cm)</label>
+                                <input type="number" id="editLength" name="length" min="10" max="500" step="0.1" value="120.0">
+                            </div>
+                            <div class="form-group">
+                                <label for="editDepth">深度 (cm)</label>
+                                <input type="number" id="editDepth" name="depth" min="10" max="200" step="0.1" value="50.0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editMaxWeight">最大承重 (kg)</label>
+                                <input type="number" id="editMaxWeight" name="maxWeight" min="10" max="1000" step="0.1" value="200.0">
+                            </div>
+                            <div class="form-group">
+                                <label for="editMainCategory">主要品类</label>
+                                <input type="text" id="editMainCategory" name="mainCategory" placeholder="如: 饮料、零食">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editRemarks">备注</label>
+                                <textarea id="editRemarks" name="remarks" rows="3" placeholder="货架备注信息"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="editIsBottomForHeavy">底层放重物</label>
+                                <select id="editIsBottomForHeavy" name="isBottomForHeavy">
+                                    <option value="false">否</option>
+                                    <option value="true">是</option>
+                                </select>
+                                <div class="form-hint">最下层是否用于存放重物</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editStatus">货架状态*</label>
+                                <select id="editStatus" name="status" required>
+                                    <option value="">请选择状态</option>
+                                    <option value="正常">正常</option>
+                                    <option value="维修中">维修中</option>
+                                    <option value="已满">已满</option>
+                                    <option value="空置">空置</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-cancel" id="cancelEditShelf">取消</button>
+                            <button type="submit" class="btn-submit" id="submitEditShelf">保存修改</button>
+                        </div>
+                    </form>
+                `;
+                
+                // 显示加载状态
+                modalBody.innerHTML = '<div class="loading">加载货架信息中...</div>';
+                
+                // 获取货架信息
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`/store-keeper/shelves/${shelfId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`获取货架信息失败: ${response.status}`);
+                }
+                
+                const shelf = await response.json();
+                
+                // 重新创建表单并填充数据
+                modalBody.innerHTML = `
+                    <form id="editShelfForm">
+                        <div class="form-note">
+                            <p><strong>注意：</strong>修改货架信息可能会影响库存管理。</p>
+                        </div>
+                        
+                        <input type="hidden" id="editShelfId" name="id" value="${shelf.id || ''}">
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editShelfCode">货架编号*</label>
+                                <input type="text" id="editShelfCode" name="shelfCode" value="${shelf.shelfCode || ''}" placeholder="如: A-01、B-02" required readonly>
+                                <div class="form-hint">货架编号不可修改</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="editShelfName">货架名称*</label>
+                                <input type="text" id="editShelfName" name="shelfName" value="${shelf.shelfName || ''}" placeholder="如: 饮料区货架A" required>
+                                <div class="form-hint">便于识别的货架名称</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editArea">所属区域*</label>
+                                <select id="editArea" name="area" required>
+                                    <option value="">请选择区域</option>
+                                    <option value="常温区" ${shelf.area === '常温区' ? 'selected' : ''}>常温区</option>
+                                    <option value="冷藏区" ${shelf.area === '冷藏区' ? 'selected' : ''}>冷藏区</option>
+                                    <option value="冷冻区" ${shelf.area === '冷冻区' ? 'selected' : ''}>冷冻区</option>
+                                    <option value="干货区" ${shelf.area === '干货区' ? 'selected' : ''}>干货区</option>
+                                    <option value="生鲜区" ${shelf.area === '生鲜区' ? 'selected' : ''}>生鲜区</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="editShelfType">货架类型*</label>
+                                <select id="editShelfType" name="shelfType" required>
+                                    <option value="">请选择类型</option>
+                                    <option value="高频快消区" ${shelf.shelfType === '高频快消区' ? 'selected' : ''}>高频快消区</option>
+                                    <option value="中频干货区" ${shelf.shelfType === '中频干货区' ? 'selected' : ''}>中频干货区</option>
+                                    <option value="低频重物区" ${shelf.shelfType === '低频重物区' ? 'selected' : ''}>低频重物区</option>
+                                    <option value="促销展示区" ${shelf.shelfType === '促销展示区' ? 'selected' : ''}>促销展示区</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editLocationDesc">位置描述</label>
+                                <input type="text" id="editLocationDesc" name="locationDesc" value="${shelf.locationDesc || ''}" placeholder="详细位置描述">
+                            </div>
+                            <div class="form-group">
+                                <label for="editFloor">所在楼层</label>
+                                <input type="number" id="editFloor" name="floor" min="1" max="10" value="${shelf.floor || 1}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editTotalLevels">总层数*</label>
+                                <input type="number" id="editTotalLevels" name="totalLevels" min="1" max="10" value="${shelf.totalLevels || 3}" required>
+                                <div class="form-hint">货架的总层数</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="editLevelHeight">层高 (cm)</label>
+                                <input type="number" id="editLevelHeight" name="levelHeight" min="10" max="200" step="0.1" value="${shelf.levelHeight || 40.0}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editLength">长度 (cm)</label>
+                                <input type="number" id="editLength" name="length" min="10" max="500" step="0.1" value="${shelf.length || 120.0}">
+                            </div>
+                            <div class="form-group">
+                                <label for="editDepth">深度 (cm)</label>
+                                <input type="number" id="editDepth" name="depth" min="10" max="200" step="0.1" value="${shelf.depth || 50.0}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editMaxWeight">最大承重 (kg)</label>
+                                <input type="number" id="editMaxWeight" name="maxWeight" min="10" max="1000" step="0.1" value="${shelf.maxWeight || 200.0}">
+                            </div>
+                            <div class="form-group">
+                                <label for="editMainCategory">主要品类</label>
+                                <input type="text" id="editMainCategory" name="mainCategory" value="${shelf.mainCategory || ''}" placeholder="如: 饮料、零食">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editRemarks">备注</label>
+                                <textarea id="editRemarks" name="remarks" rows="3" placeholder="货架备注信息">${shelf.remarks || ''}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="editIsBottomForHeavy">底层放重物</label>
+                                <select id="editIsBottomForHeavy" name="isBottomForHeavy">
+                                    <option value="false" ${!shelf.isBottomForHeavy ? 'selected' : ''}>否</option>
+                                    <option value="true" ${shelf.isBottomForHeavy ? 'selected' : ''}>是</option>
+                                </select>
+                                <div class="form-hint">最下层是否用于存放重物</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="editStatus">货架状态*</label>
+                                <select id="editStatus" name="status" required>
+                                    <option value="">请选择状态</option>
+                                    <option value="正常" ${shelf.status === '正常' ? 'selected' : ''}>正常</option>
+                                    <option value="维修中" ${shelf.status === '维修中' ? 'selected' : ''}>维修中</option>
+                                    <option value="已满" ${shelf.status === '已满' ? 'selected' : ''}>已满</option>
+                                    <option value="空置" ${shelf.status === '空置' ? 'selected' : ''}>空置</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn-cancel" id="cancelEditShelf">取消</button>
+                            <button type="submit" class="btn-submit" id="submitEditShelf">保存修改</button>
+                        </div>
+                    </form>
+                `;
+                
+                // 初始化编辑货架模态框
+                initEditShelfModal();
+                
+            } catch (error) {
+                console.error('加载货架信息失败:', error);
+                alert('加载货架信息失败: ' + error.message);
+                document.getElementById('editShelfModal').style.display = 'none';
+            }
+        }
+        
+        function initEditShelfModal() {
+            // 绑定关闭按钮
+            const closeBtn = document.getElementById('closeEditShelfModal');
+            const cancelBtn = document.getElementById('cancelEditShelf');
+            const form = document.getElementById('editShelfForm');
+            const modal = document.getElementById('editShelfModal');
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', hideEditShelfModal);
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', hideEditShelfModal);
+            }
+            
+            if (form) {
+                form.addEventListener('submit', handleEditShelfSubmit);
+            }
+            
+            if (modal) {
+                // 点击模态框背景关闭
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideEditShelfModal();
+                    }
+                });
+            }
+        }
+        
+        function hideEditShelfModal() {
+            document.getElementById('editShelfModal').style.display = 'none';
+        }
+        
+        async function handleEditShelfSubmit(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitEditShelf');
+            const originalText = submitBtn.textContent;
+            const shelfId = document.getElementById('editShelfId').value;
+            
+            try {
+                // 禁用提交按钮
+                submitBtn.disabled = true;
+                submitBtn.textContent = '保存中...';
+                
+                // 获取表单数据
+                const formData = {
+                    shelfName: document.getElementById('editShelfName').value.trim(),
+                    area: document.getElementById('editArea').value,
+                    shelfType: document.getElementById('editShelfType').value,
+                    locationDesc: document.getElementById('editLocationDesc').value.trim(),
+                    floor: parseInt(document.getElementById('editFloor').value) || 1,
+                    totalLevels: parseInt(document.getElementById('editTotalLevels').value),
+                    levelHeight: parseFloat(document.getElementById('editLevelHeight').value) || 40,
+                    length: parseFloat(document.getElementById('editLength').value) || 120,
+                    depth: parseFloat(document.getElementById('editDepth').value) || 50,
+                    maxWeight: parseFloat(document.getElementById('editMaxWeight').value) || 200,
+                    mainCategory: document.getElementById('editMainCategory').value.trim(),
+                    remarks: document.getElementById('editRemarks').value.trim(),
+                    isBottomForHeavy: document.getElementById('editIsBottomForHeavy').value === 'true',
+                    status: document.getElementById('editStatus').value
+                };
+                
+                // 验证必填字段
+                if (!formData.shelfName || !formData.area || !formData.shelfType || 
+                    !formData.totalLevels || !formData.status) {
+                    alert('请填写所有必填字段');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                    return;
+                }
+                
+                // 发送更新请求
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`/store-keeper/shelves/${shelfId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `更新失败: ${response.status}`);
+                }
+                
+                const updatedShelf = await response.json();
+                
+                alert('货架信息更新成功！');
+                hideEditShelfModal();
+                
+                // 重新加载货架列表
+                loadShelves();
+                
+            } catch (error) {
+                console.error('更新货架失败:', error);
+                alert('更新货架失败: ' + error.message);
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+        
         async function handleAddShelfSubmit(e) {
             e.preventDefault();
             
@@ -2924,7 +3458,7 @@
             document.querySelectorAll('#shelfTable .action-btn:not(.delete)').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const shelfId = this.getAttribute('data-id');
-                    alert('编辑货架功能开发中，货架ID: ' + shelfId);
+                    openEditShelfModal(shelfId);
                 });
             });
             

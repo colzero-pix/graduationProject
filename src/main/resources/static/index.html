@@ -2684,14 +2684,15 @@
             
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/store-keeper/goods/' + currentGoodsId + '/locations', {
+                const response = await fetch('/store-keeper/inventory/goods/' + currentGoodsId + '/locations', {
                     headers: {
                         'Authorization': 'Bearer ' + token
                     }
                 });
                 
                 if (response.ok) {
-                    const locations = await response.json();
+                    const data = await response.json();
+                    const locations = data.locations || [];
                     const outboundSelect = document.getElementById('outboundLocation');
                     const moveSelect = document.getElementById('moveFromLocation');
                     
@@ -2699,17 +2700,44 @@
                     outboundSelect.innerHTML = '<option value="">请选择库存位置</option>';
                     moveSelect.innerHTML = '<option value="">请选择源位置</option>';
                     
-                    // 添加选项
-                    locations.forEach(location => {
-                        const optionText = location.shelfName + ' - ' + location.levelName + 
-                                         ' - ' + location.position + ' (数量: ' + location.quantity + ')';
-                        const option = new Option(optionText, location.id);
-                        outboundSelect.add(option.cloneNode(true));
-                        moveSelect.add(option);
-                    });
+                    if (locations.length === 0) {
+                        const noOption = new Option('该商品暂无库存位置', '');
+                        noOption.disabled = true;
+                        outboundSelect.add(noOption.cloneNode(true));
+                        moveSelect.add(noOption);
+                    } else {
+                        // 添加选项
+                        locations.forEach(location => {
+                            const optionText = (location.shelfCode || '未知货架') + ' - ' + 
+                                             (location.levelName || '未知层级') + ' - ' + 
+                                             (location.position || '默认位置') + 
+                                             ' (数量: ' + (location.quantity || 0) + ')';
+                            const option = new Option(optionText, location.id);
+                            outboundSelect.add(option.cloneNode(true));
+                            moveSelect.add(option);
+                        });
+                    }
+                } else {
+                    console.error('加载库存位置失败:', response.status);
+                    const outboundSelect = document.getElementById('outboundLocation');
+                    const moveSelect = document.getElementById('moveFromLocation');
+                    const errorOption = new Option('加载库存位置失败，请重试', '');
+                    errorOption.disabled = true;
+                    outboundSelect.innerHTML = '';
+                    outboundSelect.add(errorOption.cloneNode(true));
+                    moveSelect.innerHTML = '';
+                    moveSelect.add(errorOption);
                 }
             } catch (error) {
                 console.error('加载库存位置错误:', error);
+                const outboundSelect = document.getElementById('outboundLocation');
+                const moveSelect = document.getElementById('moveFromLocation');
+                const errorOption = new Option('网络错误，请检查连接', '');
+                errorOption.disabled = true;
+                outboundSelect.innerHTML = '';
+                outboundSelect.add(errorOption.cloneNode(true));
+                moveSelect.innerHTML = '';
+                moveSelect.add(errorOption);
             }
         }
         
@@ -2762,22 +2790,35 @@
         async function handleOutboundSubmit(e) {
             e.preventDefault();
             
-            const formData = {
-                locationId: document.getElementById('outboundLocation').value,
-                quantity: parseInt(document.getElementById('outboundQuantity').value),
-                reason: document.getElementById('outboundReason').value,
-                remarks: document.getElementById('outboundRemarks').value
-            };
+            const locationId = document.getElementById('outboundLocation').value;
+            const quantity = parseInt(document.getElementById('outboundQuantity').value);
+            const reason = document.getElementById('outboundReason').value;
+            const remarks = document.getElementById('outboundRemarks').value;
             
             // 验证
-            if (!formData.locationId || !formData.quantity || formData.quantity <= 0) {
+            if (!locationId || !quantity || quantity <= 0) {
                 alert('请填写完整的出库信息');
                 return;
             }
             
+            // 获取选中的库存位置信息
+            const outboundSelect = document.getElementById('outboundLocation');
+            const selectedOption = outboundSelect.options[outboundSelect.selectedIndex];
+            const optionText = selectedOption.text;
+            
+            // 从选项文本中提取当前数量
+            const quantityMatch = optionText.match(/数量:\s*(\d+)/);
+            if (quantityMatch) {
+                const currentQuantity = parseInt(quantityMatch[1]);
+                if (quantity > currentQuantity) {
+                    alert(`出库数量(${quantity})超过该位置当前库存数量(${currentQuantity})！`);
+                    return;
+                }
+            }
+            
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/store-keeper/inventory/outbound/' + formData.locationId + '?quantity=' + formData.quantity, {
+                const response = await fetch('/store-keeper/inventory/outbound?locationId=' + locationId + '&quantity=' + quantity, {
                     method: 'POST',
                     headers: {
                         'Authorization': 'Bearer ' + token

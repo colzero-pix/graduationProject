@@ -1547,7 +1547,23 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- 货架详情模态框 -->
+    <div id="shelfDetailModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>货架详情</h3>
+                <div class="modal-subtitle">查看货架详细信息及层位分布</div>
+                <button class="modal-close" id="closeShelfDetailModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="shelfDetailContent">
+                    <div class="loading">加载货架信息中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 全局状态
         const appState = {
@@ -1625,6 +1641,11 @@
             
             // 退出登录
             document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            // 初始化全局模态框
+            setTimeout(() => {
+                initShelfDetailModal();
+            }, 100);
         }
         
         function handleLogin(e) {
@@ -3477,7 +3498,24 @@
                 });
             }
         }
-        
+
+        function initShelfDetailModal() {
+            const closeBtn = document.getElementById('closeShelfDetailModal');
+            const modal = document.getElementById('shelfDetailModal');
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', hideShelfDetailModal);
+            }
+
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        hideShelfDetailModal();
+                    }
+                });
+            }
+        }
+
         function hideEditShelfModal() {
             document.getElementById('editShelfModal').style.display = 'none';
         }
@@ -3702,6 +3740,7 @@
                     '<td>' + (shelf.totalQuantity || 0) + '</td>' +
                     '<td><span class="status ' + statusClass + '">' + statusText + '</span></td>' +
                     '<td>' +
+                    '<button class="action-btn detail" data-id="' + shelf.id + '">详情</button>' +
                     '<button class="action-btn" data-id="' + shelf.id + '">编辑</button>' +
                     '<button class="action-btn delete" data-id="' + shelf.id + '">删除</button>' +
                     '</td>' +
@@ -3716,8 +3755,16 @@
         }
         
         function bindShelfTableActions() {
+            // 绑定详情按钮
+            document.querySelectorAll('#shelfTable .action-btn.detail').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const shelfId = this.getAttribute('data-id');
+                    openShelfDetailModal(shelfId);
+                });
+            });
+
             // 绑定编辑按钮
-            document.querySelectorAll('#shelfTable .action-btn:not(.delete)').forEach(btn => {
+            document.querySelectorAll('#shelfTable .action-btn:not(.delete):not(.detail)').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const shelfId = this.getAttribute('data-id');
                     openEditShelfModal(shelfId);
@@ -3757,7 +3804,105 @@
                 });
             });
         }
-        
+
+        // ========== 货架详情功能 ==========
+        async function openShelfDetailModal(shelfId) {
+            document.getElementById('shelfDetailModal').style.display = 'flex';
+            document.getElementById('shelfDetailContent').innerHTML = '<div class="loading">加载货架信息中...</div>';
+
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/shelves/' + shelfId, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const shelf = await response.json();
+                    renderShelfDetail(shelf);
+                } else {
+                    document.getElementById('shelfDetailContent').innerHTML = '<div class="no-data">加载货架信息失败</div>';
+                }
+            } catch (error) {
+                console.error('获取货架详情错误:', error);
+                document.getElementById('shelfDetailContent').innerHTML = '<div class="no-data">网络错误，请检查连接</div>';
+            }
+        }
+
+        function renderShelfDetail(shelf) {
+            const statusClass = shelf.status === '正常' ? 'active' : 'inactive';
+            const html = `
+                <div class="goods-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">货架编号</span>
+                        <span class="info-value">${shelf.shelfCode || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">货架名称</span>
+                        <span class="info-value">${shelf.shelfName || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">所属区域</span>
+                        <span class="info-value">${shelf.area || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">货架类型</span>
+                        <span class="info-value">${shelf.shelfType || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">总层数</span>
+                        <span class="info-value">${shelf.totalLevels || 0}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">每层高度</span>
+                        <span class="info-value">${shelf.levelHeight ? shelf.levelHeight + ' cm' : 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">尺寸（长×深）</span>
+                        <span class="info-value">${shelf.length || 'N/A'} × ${shelf.depth || 'N/A'} cm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">最大承重</span>
+                        <span class="info-value">${shelf.maxWeight ? shelf.maxWeight + ' kg' : 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">楼层</span>
+                        <span class="info-value">${shelf.floor || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">商品种类</span>
+                        <span class="info-value">${shelf.productTypesCount || 0}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">总数量</span>
+                        <span class="info-value">${shelf.totalQuantity || 0}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">状态</span>
+                        <span class="info-value"><span class="status ${statusClass}">${shelf.status || '未知'}</span></span>
+                    </div>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <span class="info-label">位置描述</span>
+                    <span class="info-value">${shelf.locationDesc || '无'}</span>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <span class="info-label">主要存放类别</span>
+                    <span class="info-value">${shelf.mainCategory || '无'}</span>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                    <span class="info-label">备注</span>
+                    <span class="info-value">${shelf.remarks || '无'}</span>
+                </div>
+            `;
+            document.getElementById('shelfDetailContent').innerHTML = html;
+        }
+
+        function hideShelfDetailModal() {
+            document.getElementById('shelfDetailModal').style.display = 'none';
+        }
+
         // 添加CSS样式
         const style = document.createElement('style');
         style.textContent = `

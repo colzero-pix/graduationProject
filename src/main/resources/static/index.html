@@ -2001,7 +2001,7 @@
         
         function bindTableActions() {
             // 绑定编辑按钮（排除详情按钮）
-            document.querySelectorAll('.action-btn:not(.delete):not(.detail)').forEach(btn => {
+            document.querySelectorAll('.action-btn.edit-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const goodsId = this.getAttribute('data-id');
                     alert('编辑商品功能开发中... (商品ID: ' + goodsId + ')');
@@ -2277,7 +2277,7 @@
                     '<button class="action-btn detail" data-id="' + goods.id + '" onclick="showGoodsDetail(' + goods.id + ')">详情</button>' +
                     (appState.userRole === 'ADMIN' ? 
                         '<button class="action-btn inventory" data-id="' + goods.id + '" onclick="showInventoryManagement(' + goods.id + ')">库存</button>' : '') +
-                    '<button class="action-btn" data-id="' + goods.id + '">编辑</button>' +
+                        '<button class="action-btn edit-btn" data-id="' + goods.id + '">编辑</button>' +
                     '<button class="action-btn delete" data-id="' + goods.id + '">删除</button>' +
                     '</td>' +
                     '</tr>';
@@ -2519,6 +2519,9 @@
                 await loadShelfLevels();
             }
             
+            // 单独加载所有货架层给移库下拉框使用
+            await loadAllShelfLevelsForMove();
+
             // 加载库存位置选项
             loadInventoryLocations();
             
@@ -2561,7 +2564,7 @@
         async function loadShelfLevels() {
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/store-keeper/shelf-levels', {
+                const response = await fetch('/store-keeper/shelf-levels/list-all', {
                     headers: {
                         'Authorization': 'Bearer ' + token
                     }
@@ -2678,7 +2681,34 @@
                 await loadShelfLevels();
             }
         }
-        
+
+        async function loadAllShelfLevelsForMove() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/shelf-levels/list-all', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                if (response.ok) {
+                    const shelfLevels = await response.json();
+                    const moveSelect = document.getElementById('moveToShelfLevel');
+
+                    moveSelect.innerHTML = '<option value="">请选择目标货架层</option>';
+
+                    shelfLevels.forEach(level => {
+                        const optionText = level.shelfName + ' - ' + level.levelName +
+                                         ' (容量: ' + level.capacity + ', 已用: ' + (level.currentQuantity || 0) + ')';
+                        const option = new Option(optionText, level.id);
+                        moveSelect.add(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载移库货架层错误:', error);
+            }
+        }
+
         async function loadInventoryLocations() {
             if (!currentGoodsId) return;
             
@@ -2858,8 +2888,8 @@
             
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/store-keeper/inventory/move/' + formData.fromLocationId + 
-                                           '?toShelfLevelId=' + formData.toShelfLevelId + 
+                const response = await fetch('/store-keeper/inventory/move?fromLocationId=' + formData.fromLocationId + 
+                                           '&toShelfLevelId=' + formData.toShelfLevelId + 
                                            '&quantity=' + formData.quantity + 
                                            '&position=' + encodeURIComponent(formData.position || ''), {
                     method: 'POST',

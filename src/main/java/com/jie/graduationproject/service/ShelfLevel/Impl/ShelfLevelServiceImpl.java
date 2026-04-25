@@ -51,6 +51,20 @@ public class ShelfLevelServiceImpl implements ShelfLevelService {
     }
 
     @Override
+    public ResponseEntity<?> getAllShelfLevels() {
+        try {
+            List<ShelfLevel> allLevels = shelfLevelRepository.findAll();
+            List<ShelfLevelDTO> levelDTOs = allLevels.stream()
+                    .map(ShelfLevelDTO::fromEntity)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(levelDTOs);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("获取所有货架层失败: " + e.getMessage());
+        }
+    }
+
+    @Override
     public ResponseEntity<?> getShelfLevelById(Long levelId) {
         try {
             Optional<ShelfLevel> optionalLevel = shelfLevelRepository.findById(levelId);

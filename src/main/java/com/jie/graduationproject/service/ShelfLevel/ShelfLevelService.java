@@ -50,4 +50,7 @@ public interface ShelfLevelService {
     
     // 获取适合商品的货架层
     ResponseEntity<?> getSuitableLevelsForGoods(Long goodsId, String storageTemperature);
+
+    // 获取所有货架层
+    ResponseEntity<?> getAllShelfLevels();
 }

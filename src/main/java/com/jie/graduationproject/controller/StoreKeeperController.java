@@ -217,7 +217,14 @@ public class StoreKeeperController {
     public ResponseEntity<?> getShelfLevelById(@PathVariable Long levelId) {
         return shelfLevelService.getShelfLevelById(levelId);
     }
-    
+
+    // 获取所有货架层列表（用于移库下拉框等）
+    @GetMapping("/shelf-levels/list-all")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getAllShelfLevels() {
+        return shelfLevelService.getAllShelfLevels();
+    }
+
     // 获取可用货架层
     @GetMapping("/shelf-levels/available")
     @PreAuthorize("isAuthenticated()")

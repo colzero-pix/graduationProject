@@ -417,6 +417,10 @@
             color: #333;
         }
         
+        th, td {
+            text-align: left;
+        }
+        
         tr:hover {
             background: #f8f9fa;
         }
@@ -505,6 +509,20 @@
             padding: 40px;
             color: #999;
         }
+        
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tag-入库 { background: #e8f5e9; color: #2e7d32; }
+        .tag-出库 { background: #fbe9e7; color: #c62828; }
+        .tag-移库 { background: #e3f2fd; color: #1565c0; }
+        .tag-新建入库 { background: #f3e5f5; color: #7b1fa2; }
+        .tag-编辑 { background: #fff3e0; color: #e65100; }
+        .tag-删除 { background: #ffebee; color: #b71c1c; }
         
         /* 模态框样式 */
         .modal {
@@ -1795,8 +1813,7 @@
                         loadShelves();
                         break;
                     case 'inventory':
-                        // 暂时简化库存管理页面
-                        document.getElementById('pageContent').innerHTML = '<div class="page-header"><h2>库存管理</h2><p>功能开发中...</p></div>';
+                        loadInventoryOverview();
                         break;
                     case 'users':
                         loadUsers();
@@ -1816,49 +1833,67 @@
             loadDashboardData();
         }
         
-        function loadDashboardData() {
-            // 模拟数据加载
-            setTimeout(() => {
-                document.getElementById('totalGoods').textContent = '1,234';
-                document.getElementById('totalShelves').textContent = '56';
-                document.getElementById('activeUsers').textContent = '12';
-                document.getElementById('todayOperations').textContent = '89';
+        async function loadDashboardData() {
+            const token = localStorage.getItem('auth_token');
+            
+            try {
+                const statsResponse = await fetch('/store-keeper/inventory/statistics', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    document.getElementById('totalGoods').textContent = stats.totalGoods || 0;
+                    document.getElementById('totalShelves').textContent = stats.totalLocations || 0;
+                    document.getElementById('activeUsers').textContent = '-';
+                    document.getElementById('todayOperations').textContent = stats.totalQuantity || 0;
+                }
+            } catch (e) {
+                console.error('加载统计失败:', e);
+            }
+            
+            try {
+                const logsResponse = await fetch('/store-keeper/operation-logs/recent', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 
-                // 加载操作记录
                 const operationsElement = document.getElementById('recentOperations');
-                operationsElement.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>操作时间</th>
-                                <th>操作类型</th>
-                                <th>操作内容</th>
-                                <th>操作人</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>2026-04-19 15:30</td>
-                                <td>商品入库</td>
-                                <td>矿泉水 x 100箱</td>
-                                <td>张三</td>
-                            </tr>
-                            <tr>
-                                <td>2026-04-19 14:20</td>
-                                <td>货架调整</td>
-                                <td>A区货架重新布局</td>
-                                <td>李四</td>
-                            </tr>
-                            <tr>
-                                <td>2026-04-19 13:15</td>
-                                <td>商品出库</td>
-                                <td>方便面 x 50箱</td>
-                                <td>王五</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                `;
-            }, 500);
+                
+                if (logsResponse.ok) {
+                    const logs = await logsResponse.json();
+                    if (logs.length === 0) {
+                        operationsElement.innerHTML = '<div class="no-data">暂无操作记录</div>';
+                    } else {
+                        let html = `<table>
+                            <thead>
+                                <tr>
+                                    <th>操作时间</th>
+                                    <th>操作类型</th>
+                                    <th>操作内容</th>
+                                    <th>操作人</th>
+                                    <th>角色</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                        logs.forEach(log => {
+                            const time = log.createdAt ? log.createdAt.replace('T', ' ') : '-';
+                            html += `<tr>
+                                <td>${time}</td>
+                                <td><span class="tag tag-${log.operationType}">${log.operationType}</span></td>
+                                <td>${log.description || '-'}</td>
+                                <td>${log.operator || '-'}</td>
+                                <td>${log.operatorRole || '-'}</td>
+                            </tr>`;
+                        });
+                        html += `</tbody></table>`;
+                        operationsElement.innerHTML = html;
+                    }
+                } else {
+                    operationsElement.innerHTML = '<div class="no-data">加载失败</div>';
+                }
+            } catch (error) {
+                console.error('加载操作记录失败:', error);
+                document.getElementById('recentOperations').innerHTML = '<div class="no-data">网络错误</div>';
+            }
         }
         
         function loadGoods() {
@@ -1938,7 +1973,118 @@
                 bindTableActions();
             }, 500);
         }
-        
+
+        function loadInventoryOverview() {
+            const contentElement = document.getElementById('pageContent');
+            contentElement.innerHTML = `
+                <div class="page-header">
+                    <h2>库存总览</h2>
+                    <p>查看仓库库存整体情况</p>
+                </div>
+                <div class="stats-grid" id="inventoryStats">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e3f2fd;">
+                            <span style="font-size:24px;">📦</span>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="statTotalGoods">-</span>
+                            <span class="stat-label">商品种类</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e8f5e9;">
+                            <span style="font-size:24px;">📊</span>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="statTotalQuantity">-</span>
+                            <span class="stat-label">库存总数量</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fff3e0;">
+                            <span style="font-size:24px;">📍</span>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="statTotalLocations">-</span>
+                            <span class="stat-label">存放位置数</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #fce4ec;">
+                            <span style="font-size:24px;">⚠️</span>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number danger" id="statExpiring">-</span>
+                            <span class="stat-label">即将过期数量</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="stat-card" style="grid-column: span 1;">
+                        <h4>货架使用率</h4>
+                        <div style="font-size:36px;font-weight:bold;color:#1976d2;margin:10px 0;" id="statUtilization">-</div>
+                        <div style="color:#666;">已用 ${'${'}先占位${'}'} / 总容量 ${'${'}先占位${'}'}</div>
+                    </div>
+                    <div class="stat-card" style="grid-column: span 1;">
+                        <h4>区域分布</h4>
+                        <div id="areaStats" style="margin-top:10px;"></div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:20px;">
+                    <h4>各商品库存明细</h4>
+                    <div id="goodsInventoryTable" style="margin-top:10px;">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            `;
+            loadInventoryStats();
+        }
+
+        async function loadInventoryStats() {
+            try {
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch('/store-keeper/inventory/statistics', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('statTotalGoods').textContent = stats.totalGoods || 0;
+                    document.getElementById('statTotalQuantity').textContent = stats.totalQuantity || 0;
+                    document.getElementById('statTotalLocations').textContent = stats.totalLocations || 0;
+                    document.getElementById('statExpiring').textContent = stats.expiringQuantity || 0;
+                    document.getElementById('statUtilization').textContent = stats.utilizationRate || '0%';
+
+                    const areaStatsHtml = document.getElementById('areaStats');
+                    areaStatsHtml.innerHTML = '';
+                    if (stats.areaStatistics) {
+                        Object.entries(stats.areaStatistics).forEach(([area, qty]) => {
+                            areaStatsHtml.innerHTML += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;">' +
+                                '<span>' + area + '</span><span style="font-weight:bold;">' + qty + '件</span></div>';
+                        });
+                    }
+
+                    const goodsTable = document.getElementById('goodsInventoryTable');
+                    const goodsStats = stats.goodsStatistics || [];
+                    if (goodsStats.length === 0) {
+                        goodsTable.innerHTML = '<div class="no-data">暂无库存数据</div>';
+                    } else {
+                        let html = '<table><thead><tr><th>商品名称</th><th>库存总量</th><th>存放位置数</th></tr></thead><tbody>';
+                        goodsStats.forEach(g => {
+                            html += '<tr><td>' + g.goodsName + '</td><td>' + g.totalQuantity + '</td><td>' + g.locationCount + '</td></tr>';
+                        });
+                        html += '</tbody></table>';
+                        goodsTable.innerHTML = html;
+                    }
+                } else {
+                    document.getElementById('goodsInventoryTable').innerHTML = '<div class="no-data">加载失败</div>';
+                }
+            } catch (error) {
+                console.error('加载库存统计错误:', error);
+                document.getElementById('goodsInventoryTable').innerHTML = '<div class="no-data">网络错误</div>';
+            }
+        }
+
         function loadShelves() {
             const template = document.getElementById('shelfTemplate');
             const contentElement = document.getElementById('pageContent');

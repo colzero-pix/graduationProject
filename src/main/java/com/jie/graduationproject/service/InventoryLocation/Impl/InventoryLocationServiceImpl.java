@@ -4,15 +4,20 @@ import com.jie.graduationproject.model.dto.AddGoodsWithLocationDTO;
 import com.jie.graduationproject.model.dto.InventoryLocationDTO;
 import com.jie.graduationproject.model.entity.Goods;
 import com.jie.graduationproject.model.entity.InventoryLocation;
+import com.jie.graduationproject.model.entity.OperationLog;
+import com.jie.graduationproject.model.entity.Shelf;
 import com.jie.graduationproject.model.entity.ShelfLevel;
 import com.jie.graduationproject.repository.GoodsRepository;
 import com.jie.graduationproject.repository.InventoryLocationRepository;
+import com.jie.graduationproject.repository.OperationLogRepository;
 import com.jie.graduationproject.repository.ShelfLevelRepository;
 import com.jie.graduationproject.service.InventoryLocation.InventoryLocationService;
 import com.jie.graduationproject.service.ShelfLevel.ShelfLevelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,17 +34,54 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
     private final GoodsRepository goodsRepository;
     private final ShelfLevelRepository shelfLevelRepository;
     private final ShelfLevelService shelfLevelService;
+    private final OperationLogRepository operationLogRepository;
 
     @Autowired
     public InventoryLocationServiceImpl(
             InventoryLocationRepository inventoryLocationRepository,
             GoodsRepository goodsRepository,
             ShelfLevelRepository shelfLevelRepository,
-            ShelfLevelService shelfLevelService) {
+            ShelfLevelService shelfLevelService,
+            OperationLogRepository operationLogRepository) {
         this.inventoryLocationRepository = inventoryLocationRepository;
         this.goodsRepository = goodsRepository;
         this.shelfLevelRepository = shelfLevelRepository;
         this.shelfLevelService = shelfLevelService;
+        this.operationLogRepository = operationLogRepository;
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+        return "系统";
+    }
+
+    private String getCurrentUserRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getAuthorities().stream()
+                    .findFirst()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .orElse("未知");
+        }
+        return "系统";
+    }
+
+    private String buildLocationInfo(InventoryLocation location) {
+        if (location == null || location.getShelfLevel() == null) return "";
+        ShelfLevel level = location.getShelfLevel();
+        Shelf shelf = level.getShelf();
+        return (shelf != null ? shelf.getShelfName() + " - " : "") + level.getLevelName() +
+                (location.getPosition() != null ? " (" + location.getPosition() + ")" : "");
+    }
+
+    private void saveOperationLog(String operationType, String description, String goodsName,
+                                  Integer quantity, String locationInfo) {
+        OperationLog log = new OperationLog(operationType, description, goodsName, quantity,
+                getCurrentUsername(), getCurrentUserRole(), locationInfo);
+        operationLogRepository.save(log);
     }
 
     @Override
@@ -316,6 +358,13 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
             // 更新目标货架层数量
             shelfLevelService.updateLevelQuantity(toLevel.getId(), quantity);
             
+            // 记录操作日志
+            String fromInfo = buildLocationInfo(fromLocation);
+            String toInfo = buildLocationInfo(savedToLocation);
+            String goodsName = fromLocation.getGoods().getName();
+            String description = "将 " + goodsName + " x" + quantity + " 从 " + fromInfo + " 移至 " + toInfo;
+            saveOperationLog("移库", description, goodsName, quantity, fromInfo + " → " + toInfo);
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "库存移动成功");
             response.put("fromLocation", InventoryLocationDTO.fromEntity(fromLocation));
@@ -366,6 +415,12 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
             goods.setUpdatedAt(LocalDateTime.now());
             goodsRepository.save(goods);
             
+            // 记录操作日志
+            String goodsName = location.getGoods().getName();
+            String locInfo = buildLocationInfo(location);
+            String description = "出库 " + goodsName + " x" + quantity + "，剩余 " + location.getQuantity();
+            saveOperationLog("出库", description, goodsName, -quantity, locInfo);
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "出库成功");
             response.put("location", InventoryLocationDTO.fromEntity(location));
@@ -379,7 +434,6 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
         }
     }
 
-    // 其他方法实现（由于代码长度限制，这里只实现核心方法）
     @Override
     public ResponseEntity<?> inboundInventory(Long locationId, Integer quantity) {
         try {
@@ -420,6 +474,12 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
             goods.setUpdatedAt(LocalDateTime.now());
             goodsRepository.save(goods);
             
+            // 记录操作日志
+            String goodsName = location.getGoods().getName();
+            String locInfo = buildLocationInfo(location);
+            String description = "入库 " + goodsName + " x" + quantity + "，当前总计 " + location.getQuantity();
+            saveOperationLog("入库", description, goodsName, quantity, locInfo);
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "入库成功");
             response.put("location", InventoryLocationDTO.fromEntity(location));
@@ -1009,6 +1069,11 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
             goods.setUpdatedAt(LocalDateTime.now());
             goodsRepository.save(goods);
             
+            // 记录操作日志
+            String locInfo = buildLocationInfo(savedLocation);
+            String description = "新增商品入库 " + goods.getName() + " x" + quantity;
+            saveOperationLog("新建入库", description, goods.getName(), quantity, locInfo);
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "入库成功");
             response.put("location", InventoryLocationDTO.fromEntity(savedLocation));

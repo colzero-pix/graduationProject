@@ -1,13 +1,8 @@
 package com.jie.graduationproject.controller;
 
-import com.jie.graduationproject.model.dto.AddGoodsDTO;
-import com.jie.graduationproject.model.dto.AddGoodsWithLocationDTO;
-import com.jie.graduationproject.model.dto.AddShelfDTO;
-import com.jie.graduationproject.model.dto.GoodsQueryDTO;
-import com.jie.graduationproject.model.dto.InventoryLocationDTO;
-import com.jie.graduationproject.model.dto.ShelfQueryDTO;
-import com.jie.graduationproject.model.dto.UpdateGoodsDTO;
-import com.jie.graduationproject.model.dto.UpdateShelfDTO;
+import com.jie.graduationproject.model.dto.*;
+import com.jie.graduationproject.model.entity.OperationLog;
+import com.jie.graduationproject.repository.OperationLogRepository;
 import com.jie.graduationproject.service.Goods.GoodsService;
 import com.jie.graduationproject.service.Goods.Impl.GoodsServiceImpl;
 import com.jie.graduationproject.service.InventoryLocation.InventoryLocationService;
@@ -34,17 +29,20 @@ public class StoreKeeperController {
     private final GoodsServiceImpl goodsServiceImpl;
     private final ShelfLevelService shelfLevelService;
     private final InventoryLocationService inventoryLocationService;
+    private final OperationLogRepository operationLogRepository;
 
     @Autowired
     public StoreKeeperController(
             ShelfServiceImpl shelfServiceImpl, 
             GoodsServiceImpl goodsServiceImpl,
             ShelfLevelService shelfLevelService,
-            InventoryLocationService inventoryLocationService) {
+            InventoryLocationService inventoryLocationService,
+            OperationLogRepository operationLogRepository) {
         this.shelfServiceImpl = shelfServiceImpl;
         this.goodsServiceImpl = goodsServiceImpl;
         this.shelfLevelService = shelfLevelService;
         this.inventoryLocationService = inventoryLocationService;
+        this.operationLogRepository = operationLogRepository;
     }
 
     // 添加货架（仅管理员）
@@ -382,5 +380,15 @@ public class StoreKeeperController {
             @RequestParam List<Long> locationIds,
             @RequestParam String status) {
         return inventoryLocationService.batchUpdateStatus(locationIds, status);
+    }
+
+    // ========== 操作日志接口 ==========
+
+    // 获取最近操作记录
+    @GetMapping("/operation-logs/recent")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getRecentOperationLogs() {
+        List<OperationLog> logs = operationLogRepository.findTop10ByOrderByCreatedAtDesc();
+        return ResponseEntity.ok(logs);
     }
 }

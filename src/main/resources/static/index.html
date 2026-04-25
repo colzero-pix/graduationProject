@@ -3812,15 +3812,22 @@
 
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/store-keeper/shelves/' + shelfId, {
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                });
+                const [shelfRes, levelsRes] = await Promise.all([
+                    fetch('/store-keeper/shelves/' + shelfId, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    }),
+                    fetch('/store-keeper/shelves/' + shelfId + '/levels', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    })
+                ]);
 
-                if (response.ok) {
-                    const shelf = await response.json();
-                    renderShelfDetail(shelf);
+                if (shelfRes.ok) {
+                    const shelf = await shelfRes.json();
+                    let levels = [];
+                    if (levelsRes.ok) {
+                        levels = await levelsRes.json();
+                    }
+                    renderShelfDetail(shelf, levels);
                 } else {
                     document.getElementById('shelfDetailContent').innerHTML = '<div class="no-data">加载货架信息失败</div>';
                 }
@@ -3830,8 +3837,33 @@
             }
         }
 
-        function renderShelfDetail(shelf) {
+        function renderShelfDetail(shelf, levels) {
             const statusClass = shelf.status === '正常' ? 'active' : 'inactive';
+            
+            let levelsHtml = '';
+            if (levels && levels.length > 0) {
+                levelsHtml = '<h4 style="margin: 20px 0 10px;">层位库存明细</h4>' +
+                    '<table><thead><tr>' +
+                    '<th>层号</th><th>层名</th><th>容量</th><th>已用</th><th>剩余</th><th>商品详情</th><th>状态</th>' +
+                    '</tr></thead><tbody>';
+                levels.forEach(level => {
+                    const levelStatusClass = level.status === '空闲' || level.status === '正常' ? 'active' : 'inactive';
+                    const remaining = (level.capacity || 0) - (level.currentQuantity || 0);
+                    levelsHtml += '<tr>' +
+                        '<td>' + (level.levelNumber || 'N/A') + '</td>' +
+                        '<td>' + (level.levelName || 'N/A') + '</td>' +
+                        '<td>' + (level.capacity || 0) + '</td>' +
+                        '<td>' + (level.currentQuantity || 0) + '</td>' +
+                        '<td>' + remaining + '</td>' +
+                        '<td>' + (level.goodsDetail || '无') + '</td>' +
+                        '<td><span class="status ' + levelStatusClass + '">' + (level.status || '未知') + '</span></td>' +
+                        '</tr>';
+                });
+                levelsHtml += '</tbody></table>';
+            } else {
+                levelsHtml = '<p style="color:#999;margin-top:20px;">该货架暂无层位数据</p>';
+            }
+
             const html = `
                 <div class="goods-info-grid">
                     <div class="info-item">
@@ -3895,6 +3927,7 @@
                     <span class="info-label">备注</span>
                     <span class="info-value">${shelf.remarks || '无'}</span>
                 </div>
+                ${levelsHtml}
             `;
             document.getElementById('shelfDetailContent').innerHTML = html;
         }

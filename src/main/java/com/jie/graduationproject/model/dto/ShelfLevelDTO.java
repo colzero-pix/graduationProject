@@ -28,6 +28,9 @@ public class ShelfLevelDTO {
     // 商品列表（可选，用于详情页面）
     private Object goodsList;
 
+    // 商品详情文本（用于前端展示，如 "矿泉水 x40"）
+    private String goodsDetail;
+
     // Getter和Setter
     public Long getId() {
         return id;
@@ -139,6 +142,14 @@ public class ShelfLevelDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getGoodsDetail() {
+        return goodsDetail;
+    }
+
+    public void setGoodsDetail(String goodsDetail) {
+        this.goodsDetail = goodsDetail;
     }
 
     public Object getGoodsList() {

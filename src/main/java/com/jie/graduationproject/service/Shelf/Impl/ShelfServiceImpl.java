@@ -5,8 +5,12 @@ import com.jie.graduationproject.model.dto.ShelfQueryDTO;
 import com.jie.graduationproject.model.dto.UpdateShelfDTO;
 import com.jie.graduationproject.model.entity.Goods;
 import com.jie.graduationproject.model.entity.Shelf;
+import com.jie.graduationproject.model.entity.ShelfLevel;
+import com.jie.graduationproject.model.entity.InventoryLocation;
 import com.jie.graduationproject.repository.GoodsRepository;
 import com.jie.graduationproject.repository.ShelfRepository;
+import com.jie.graduationproject.repository.ShelfLevelRepository;
+import com.jie.graduationproject.repository.InventoryLocationRepository;
 import com.jie.graduationproject.service.Shelf.ShelfService;
 import com.jie.graduationproject.service.ShelfLevel.ShelfLevelService;
 import jakarta.transaction.Transactional;
@@ -18,6 +22,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Service
 public class ShelfServiceImpl implements ShelfService {
@@ -30,6 +37,12 @@ public class ShelfServiceImpl implements ShelfService {
     
     @Autowired
     private ShelfLevelService shelfLevelService;
+
+    @Autowired
+    private ShelfLevelRepository shelfLevelRepository;
+
+    @Autowired
+    private InventoryLocationRepository inventoryLocationRepository;
 
     @Override
     @Transactional
@@ -191,8 +204,11 @@ public class ShelfServiceImpl implements ShelfService {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("货架不存在，ID：" + id);
             }
+
+            Shelf shelf = shelfOptional.get();
+            updateShelfStatistics(shelf);
             
-            return ResponseEntity.ok(shelfOptional.get());
+            return ResponseEntity.ok(shelf);
             
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -204,12 +220,33 @@ public class ShelfServiceImpl implements ShelfService {
     public ResponseEntity<?> getAllShelves() {
         try {
             List<Shelf> shelves = shelfRepository.findAll();
+            shelves.forEach(this::updateShelfStatistics);
             return ResponseEntity.ok(shelves);
             
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("查询货架列表失败：" + e.getMessage());
         }
+    }
+
+    private void updateShelfStatistics(Shelf shelf) {
+        List<ShelfLevel> levels = shelfLevelRepository.findByShelfId(shelf.getId());
+        
+        int totalQty = 0;
+        Set<Long> goodsIds = new HashSet<>();
+        
+        for (ShelfLevel level : levels) {
+            List<InventoryLocation> locations = inventoryLocationRepository.findByShelfLevelId(level.getId());
+            for (InventoryLocation loc : locations) {
+                totalQty += loc.getQuantity() != null ? loc.getQuantity() : 0;
+                if (loc.getGoods() != null) {
+                    goodsIds.add(loc.getGoods().getId());
+                }
+            }
+        }
+        
+        shelf.setTotalQuantity(totalQty);
+        shelf.setProductTypesCount(goodsIds.size());
     }
 
     @Override

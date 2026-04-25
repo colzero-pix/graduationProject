@@ -42,6 +42,20 @@ public class ShelfLevelServiceImpl implements ShelfLevelService {
             List<ShelfLevelDTO> levelDTOs = levels.stream()
                     .map(ShelfLevelDTO::fromEntity)
                     .collect(Collectors.toList());
+
+            for (ShelfLevelDTO dto : levelDTOs) {
+                List<InventoryLocation> locations = inventoryLocationRepository.findByShelfLevelId(dto.getId());
+                StringBuilder goodsDetail = new StringBuilder();
+                for (InventoryLocation loc : locations) {
+                    if (loc.getGoods() != null && loc.getQuantity() != null && loc.getQuantity() > 0) {
+                        if (goodsDetail.length() > 0) {
+                            goodsDetail.append("，");
+                        }
+                        goodsDetail.append(loc.getGoods().getName()).append(" x").append(loc.getQuantity());
+                    }
+                }
+                dto.setGoodsDetail(goodsDetail.length() > 0 ? goodsDetail.toString() : "空");
+            }
             
             return ResponseEntity.ok(levelDTOs);
         } catch (Exception e) {

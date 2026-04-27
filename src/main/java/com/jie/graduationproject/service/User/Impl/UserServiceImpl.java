@@ -93,19 +93,13 @@ public class UserServiceImpl implements UserService {
 
             User newUser = new User();
             newUser.setUsername(loginRegisterDTO.getUsername());
-            newUser.setPassword(passwordEncoder.encode(loginRegisterDTO.getPassword()));
-            
-            // 设置默认角色：用户名包含"admin"的设为ADMIN，其他为STORE_KEEPER
-            if (loginRegisterDTO.getUsername().toLowerCase().contains("admin")) {
-                newUser.setRole("ADMIN");
-            } else {
-                newUser.setRole("STORE_KEEPER");
-            }
+            newUser.setPassword(passwordEncoder.encode("123456"));
+            newUser.setRole("STORE_KEEPER");
 
             userRepository.save(newUser);
 
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("用户注册成功");
+                    .body("用户 " + loginRegisterDTO.getUsername() + " 注册成功（密码：123456，角色：STORE_KEEPER）");
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -179,10 +173,11 @@ public class UserServiceImpl implements UserService {
             }
 
             UserInfoDTO targetInfo = new UserInfoDTO(
+                    targetUser.getId(),
                     targetUser.getUsername(),
-                    targetUser.getRole(),
-                    targetUser.getPhone()
+                    targetUser.getRole()
             );
+            targetInfo.setPhone(targetUser.getPhone());
 
             return ResponseEntity.ok(targetInfo);
         } catch (Exception e) {
@@ -321,9 +316,9 @@ public class UserServiceImpl implements UserService {
             // 转换为DTO列表，排除密码等敏感信息
             List<UserInfoDTO> userList = users.stream()
                     .map(user -> new UserInfoDTO(
+                            user.getId(),
                             user.getUsername(),
-                            user.getRole(),
-                            user.getPhone()
+                            user.getRole()
                     ))
                     .collect(Collectors.toList());
 
@@ -331,6 +326,30 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("获取用户列表失败：" + e.getMessage());
+        }
+    }
+
+    // 当前用户自行修改电话
+    @Override
+    public ResponseEntity<?> updateCurrentUserPhone(String phone) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("用户未认证");
+            }
+
+            String username = authentication.getName();
+            User user = userRepository.findUserByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+            user.setPhone(phone);
+            userRepository.save(user);
+
+            return ResponseEntity.ok("电话修改成功");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("电话修改失败：" + e.getMessage());
         }
     }
 }

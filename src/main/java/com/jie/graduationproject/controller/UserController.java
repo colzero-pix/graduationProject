@@ -68,6 +68,14 @@ public class UserController {
         return userServiceImpl.getUserInfo();
     }
 
+    //用户自行修改电话
+    @PutMapping("/phone")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updatePhone(@RequestBody Map<String, String> request) {
+        String phone = request.get("phone");
+        return userServiceImpl.updateCurrentUserPhone(phone);
+    }
+
     //修改密码（需要原密码）
     @PutMapping("/password")
     @PreAuthorize("isAuthenticated()")

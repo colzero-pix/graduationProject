@@ -22,4 +22,6 @@ public interface UserService {
     public ResponseEntity<?> resetPassword(ResetPasswordDTO resetPasswordDTO);
 
     public ResponseEntity<?> getAllUsers();
+
+    public ResponseEntity<?> updateCurrentUserPhone(String phone);
 }

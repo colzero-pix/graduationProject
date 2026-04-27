@@ -1,7 +1,5 @@
 package com.jie.graduationproject.model.dto;
 
-import lombok.Data;
-
 public class GoodsQueryDTO {
 
     private String keyword;

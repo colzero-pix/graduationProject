@@ -893,7 +893,8 @@
                     <a class="nav-item active" data-page="dashboard">仪表盘</a>
                     <a class="nav-item" data-page="goods">商品管理</a>
                     <a class="nav-item" data-page="shelf">货架管理</a>
-                    <a class="nav-item" data-page="inventory">库存管理</a>
+                    <a class="nav-item" data-page="inventory">库存总览</a>
+                    <a class="nav-item" data-page="inventorySearch">库存查询</a>
                     <a class="nav-item" data-page="users" id="usersNavItem" style="display: none;">用户管理</a>
                     <a class="nav-item" data-page="settings">个人设置</a>
                 </div>
@@ -939,7 +940,22 @@
             </div>
         </div>
         
-        <div class="table-container" style="margin-top: 30px;">
+        <div class="alert-grid" style="display: flex; gap: 20px; margin-top: 20px;">
+            <div class="table-container" style="flex: 1; min-width: 0;">
+                <div class="table-header" style="border-bottom-color: #ff9800;">
+                    <div class="table-title" style="color: #e65100;">低库存预警</div>
+                </div>
+                <div id="lowStockAlerts" class="loading">加载中...</div>
+            </div>
+            <div class="table-container" style="flex: 1; min-width: 0;">
+                <div class="table-header" style="border-bottom-color: #f44336;">
+                    <div class="table-title" style="color: #c62828;">临期商品预警</div>
+                </div>
+                <div id="expiringAlerts" class="loading">加载中...</div>
+            </div>
+        </div>
+        
+        <div class="table-container" style="margin-top: 20px;">
             <div class="table-header">
                 <div class="table-title">最近操作记录</div>
             </div>
@@ -953,7 +969,12 @@
         <div class="table-container">
             <div class="table-header">
                 <div class="table-title">商品列表</div>
-                <button class="add-btn" id="addGoodsBtn">添加商品</button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="goodsSearchInput" placeholder="搜索商品名称/编码..." style="padding:6px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:200px;">
+                    <button class="action-btn" onclick="searchGoods()" style="padding:6px 12px;">搜索</button>
+                    <button class="action-btn" onclick="resetGoodsSearch()" style="display:none;" id="resetGoodsSearchBtn">重置</button>
+                    <button class="add-btn" id="addGoodsBtn">添加商品</button>
+                </div>
             </div>
             <div id="goodsTable" class="loading">加载商品数据...</div>
         </div>
@@ -965,7 +986,18 @@
         <div class="table-container">
             <div class="table-header">
                 <div class="table-title">货架列表</div>
-                <button class="add-btn" id="addShelfBtn">添加货架</button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="shelfSearchInput" placeholder="搜索货架编号/名称/区域..." style="padding:6px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:220px;">
+                    <select id="shelfAreaFilter" style="padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                        <option value="">所有区域</option>
+                        <option value="常温区">常温区</option>
+                        <option value="冷藏区">冷藏区</option>
+                        <option value="冷冻区">冷冻区</option>
+                    </select>
+                    <button class="action-btn" onclick="searchShelves()" style="padding:6px 12px;">搜索</button>
+                    <button class="action-btn" onclick="resetShelfSearch()" style="display:none;" id="resetShelfSearchBtn">重置</button>
+                    <button class="add-btn" id="addShelfBtn">添加货架</button>
+                </div>
             </div>
             <div id="shelfTable" class="loading">加载货架数据...</div>
         </div>
@@ -1461,6 +1493,33 @@
         </div>
     </div>
     
+    <template id="inventorySearchTemplate">
+        <div class="page-title">库存查询</div>
+        
+        <div class="table-container">
+            <div class="table-header">
+                <div class="table-title">库存查询与批量操作</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="invSearchKeyword" placeholder="搜索商品名称/编码..." style="padding:6px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:180px;">
+                    <select id="invSearchArea" style="padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                        <option value="">所有区域</option>
+                        <option value="常温区">常温区</option>
+                        <option value="冷藏区">冷藏区</option>
+                        <option value="冷冻区">冷冻区</option>
+                    </select>
+                    <button class="action-btn" onclick="doInventorySearch()" style="padding:6px 12px;">搜索</button>
+                    <button class="action-btn" onclick="resetInventorySearch()" style="display:none;" id="resetInvSearchBtn">重置</button>
+                </div>
+            </div>
+            <div id="invSearchTable" class="loading">加载库存数据...</div>
+            <div style="padding:12px;display:none;" id="invBatchActions">
+                <button class="action-btn" onclick="batchUpdateInvStatus('正常')">批量设为正常</button>
+                <button class="action-btn" onclick="batchUpdateInvStatus('待退货')">批量设为待退货</button>
+                <button class="action-btn delete" onclick="batchUpdateInvStatus('残损')">批量设为残损</button>
+            </div>
+        </div>
+    </template>
+    
     <!-- 库存管理模态框 -->
     <div id="inventoryManagementModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 600px;">
@@ -1557,6 +1616,10 @@
                         </div>
                     </div>
                     
+                    <div style="padding:0 8px;margin-bottom:10px;">
+                        <button type="button" class="action-btn" onclick="getFIFOSuggestions()" style="font-size:12px;">FIFO出库建议</button>
+                        <span style="font-size:12px;color:#888;margin-left:8px;">按入库日期先后推荐出库位置</span>
+                    </div>
                     <div class="form-actions">
                         <button type="button" class="btn-cancel" id="cancelOutbound">取消</button>
                         <button type="submit" class="btn-submit">确认出库</button>
@@ -1858,6 +1921,9 @@
                     case 'inventory':
                         loadInventoryOverview();
                         break;
+                    case 'inventorySearch':
+                        loadInventorySearch();
+                        break;
                     case 'users':
                         loadUsers();
                         break;
@@ -1889,12 +1955,79 @@
                 if (statsResponse.ok) {
                     const stats = await statsResponse.json();
                     document.getElementById('totalGoods').textContent = stats.totalGoods || 0;
-                    document.getElementById('totalShelves').textContent = stats.totalLocations || 0;
-                    document.getElementById('activeUsers').textContent = '-';
                     document.getElementById('todayOperations').textContent = stats.totalQuantity || 0;
                 }
             } catch (e) {
                 console.error('加载统计失败:', e);
+            }
+            
+            // 加载真实货架数量
+            try {
+                const shelfRes = await fetch('/store-keeper/shelves', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (shelfRes.ok) {
+                    const shelves = await shelfRes.json();
+                    document.getElementById('totalShelves').textContent = shelves.length || 0;
+                }
+            } catch (e) {
+                console.error('加载货架数量失败:', e);
+            }
+            
+            // 加载低库存预警
+            try {
+                const lowStockRes = await fetch('/store-keeper/goods/low-stock', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const el = document.getElementById('lowStockAlerts');
+                if (lowStockRes.ok) {
+                    const goods = await lowStockRes.json();
+                    if (goods.length === 0) {
+                        el.innerHTML = '<div class="no-data" style="color:#4caf50;">无低库存商品</div>';
+                    } else {
+                        let html = '<table><thead><tr><th>商品名称</th><th>库存</th><th>预警阈值</th></tr></thead><tbody>';
+                        goods.forEach(g => {
+                            html += '<tr><td>' + (g.name || '-') + '</td><td style="color:#e65100;font-weight:bold;">' + (g.quantity || 0) + '</td><td>' + (g.threshold || 0) + '</td></tr>';
+                        });
+                        html += '</tbody></table>';
+                        el.innerHTML = html;
+                    }
+                } else {
+                    el.innerHTML = '<div class="no-data">加载失败</div>';
+                }
+            } catch (e) {
+                console.error('加载低库存预警失败:', e);
+                document.getElementById('lowStockAlerts').innerHTML = '<div class="no-data">网络错误</div>';
+            }
+            
+            // 加载临期商品预警
+            try {
+                const expiringRes = await fetch('/store-keeper/goods/expiring?days=30', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const el = document.getElementById('expiringAlerts');
+                if (expiringRes.ok) {
+                    const goods = await expiringRes.json();
+                    if (goods.length === 0) {
+                        el.innerHTML = '<div class="no-data" style="color:#4caf50;">无临期商品</div>';
+                    } else {
+                        let html = '<table><thead><tr><th>商品名称</th><th>过期日期</th><th>库存</th></tr></thead><tbody>';
+                        const today = new Date();
+                        goods.forEach(g => {
+                            const expDate = g.expiryDate || '-';
+                            const daysLeft = expDate !== '-' ? Math.ceil((new Date(expDate) - today) / (1000*60*60*24)) : '-';
+                            const isUrgent = daysLeft !== '-' && daysLeft <= 7;
+                            html += '<tr><td>' + (g.name || '-') + '</td><td style="color:' + (isUrgent ? '#d32f2f' : '#ff9800') + ';font-weight:bold;">' + expDate + (daysLeft !== '-' ? ' (' + daysLeft + '天)' : '') + '</td><td>' + (g.quantity || 0) + '</td></tr>';
+                        });
+                        html += '</tbody></table>';
+                        el.innerHTML = html;
+                    }
+                } else {
+                    el.innerHTML = '<div class="no-data">加载失败</div>';
+                }
+            } catch (e) {
+                console.error('加载临期商品预警失败:', e);
+                document.getElementById('expiringAlerts').innerHTML = '<div class="no-data">网络错误</div>';
             }
             
             try {
@@ -1942,6 +2075,30 @@
             }
         }
         
+        let allGoodsCache = null;
+        
+        async function searchGoods() {
+            const keyword = document.getElementById('goodsSearchInput').value.trim();
+            if (!keyword) { resetGoodsSearch(); return; }
+            document.getElementById('resetGoodsSearchBtn').style.display = 'inline-block';
+            
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch('/store-keeper/goods/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ keyword: keyword })
+                });
+                if (res.ok) renderGoodsTable(await res.json());
+            } catch (e) { console.error('搜索商品失败:', e); }
+        }
+        
+        function resetGoodsSearch() {
+            document.getElementById('goodsSearchInput').value = '';
+            document.getElementById('resetGoodsSearchBtn').style.display = 'none';
+            loadGoodsData();
+        }
+        
         function loadGoods() {
             const template = document.getElementById('goodsTemplate');
             const contentElement = document.getElementById('pageContent');
@@ -1954,6 +2111,11 @@
                 document.getElementById('addGoodsBtn').addEventListener('click', showAddGoodsModal);
                 initAddGoodsModal();
             }
+            
+            // 绑定回车搜索
+            document.getElementById('goodsSearchInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') searchGoods();
+            });
             
             // 加载商品数据
             loadGoodsData();
@@ -2133,6 +2295,215 @@
             }
         }
 
+        // ========== 库存查询与批量操作 ==========
+        let selectedInvLocations = new Set();
+        
+        function loadInventorySearch() {
+            const template = document.getElementById('inventorySearchTemplate');
+            const contentElement = document.getElementById('pageContent');
+            contentElement.innerHTML = template.innerHTML;
+            document.getElementById('invSearchKeyword').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') doInventorySearch();
+            });
+            doInventorySearch();
+        }
+        
+        async function doInventorySearch() {
+            const keyword = document.getElementById('invSearchKeyword').value.trim();
+            const area = document.getElementById('invSearchArea').value;
+            document.getElementById('resetInvSearchBtn').style.display = keyword || area ? 'inline-block' : 'none';
+            selectedInvLocations.clear();
+            document.getElementById('invBatchActions').style.display = 'none';
+            
+            const token = localStorage.getItem('auth_token');
+            try {
+                let url = '/store-keeper/inventory/search?';
+                if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
+                if (area) url += 'area=' + encodeURIComponent(area) + '&';
+                
+                const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+                const el = document.getElementById('invSearchTable');
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    const list = data.inventoryList || data;
+                    if (!list || list.length === 0) {
+                        el.innerHTML = '<div class="no-data">未找到匹配的库存记录</div>';
+                        return;
+                    }
+                    let html = '<table><thead><tr><th style="width:40px;"><input type="checkbox" onchange="toggleAllInv(this)"></th>' +
+                        '<th>商品名称</th><th>货架位置</th><th>数量</th><th>批次号</th><th>入库日期</th><th>过期日期</th><th>状态</th></tr></thead><tbody>';
+                    list.forEach(item => {
+                        const locId = item.id || item.locationId;
+                        html += '<tr>' +
+                            '<td><input type="checkbox" class="inv-checkbox" value="' + locId + '" onchange="updateBatchBtn()"></td>' +
+                            '<td>' + (item.goodsName || '-') + '</td>' +
+                            '<td>' + (item.shelfCode || '') + ' ' + (item.levelName || '') + ' ' + (item.position || '') + '</td>' +
+                            '<td>' + (item.quantity || 0) + '</td>' +
+                            '<td>' + (item.batchNumber || '-') + '</td>' +
+                            '<td>' + (item.storageDate || '-') + '</td>' +
+                            '<td>' + (item.expiryDate || '-') + '</td>' +
+                            '<td><span class="status ' + (item.status === '正常' ? 'active' : 'inactive') + '">' + (item.status || '-') + '</span></td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table>';
+                    el.innerHTML = html;
+                    document.getElementById('invBatchActions').style.display = 'block';
+                } else {
+                    el.innerHTML = '<div class="no-data">查询失败</div>';
+                }
+            } catch (e) {
+                console.error('查询库存失败:', e);
+                document.getElementById('invSearchTable').innerHTML = '<div class="no-data">网络错误</div>';
+            }
+        }
+        
+        function resetInventorySearch() {
+            document.getElementById('invSearchKeyword').value = '';
+            document.getElementById('invSearchArea').value = '';
+            document.getElementById('resetInvSearchBtn').style.display = 'none';
+            doInventorySearch();
+        }
+        
+        function toggleAllInv(master) {
+            document.querySelectorAll('.inv-checkbox').forEach(cb => cb.checked = master.checked);
+            updateBatchBtn();
+        }
+        
+        function updateBatchBtn() {
+            selectedInvLocations.clear();
+            document.querySelectorAll('.inv-checkbox:checked').forEach(cb => selectedInvLocations.add(cb.value));
+            document.getElementById('invBatchActions').style.display = selectedInvLocations.size > 0 ? 'block' : 'none';
+        }
+        
+        async function batchUpdateInvStatus(status) {
+            const ids = Array.from(document.querySelectorAll('.inv-checkbox:checked')).map(cb => parseInt(cb.value));
+            if (ids.length === 0) { alert('请先选择要修改的库存位置'); return; }
+            if (!confirm('确定将选中的 ' + ids.length + ' 条库存记录的状态改为「' + status + '」吗？')) return;
+            
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch('/store-keeper/inventory/batch-update-status?locationIds=' + ids.join(',') + '&status=' + encodeURIComponent(status), {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    alert('批量状态更新成功！');
+                    doInventorySearch();
+                } else {
+                    const data = await res.json();
+                    alert('更新失败: ' + (data.message || '未知错误'));
+                }
+            } catch (e) {
+                console.error('批量更新错误:', e);
+                alert('网络错误');
+            }
+        }
+        
+        // ========== FIFO出库建议 ==========
+        let fifoSuggestionsCache = [];
+        
+        async function getFIFOSuggestions() {
+            if (!currentGoodsId) { alert('请先选择商品'); return; }
+            const quantity = parseInt(document.getElementById('outboundQuantity').value);
+            if (!quantity || quantity <= 0) { alert('请先输入出库数量'); return; }
+            
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch('/store-keeper/inventory/fifo-suggestions?goodsId=' + currentGoodsId + '&requiredQuantity=' + quantity, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    fifoSuggestionsCache = data.suggestions || [];
+                    if (fifoSuggestionsCache.length === 0) { alert('未找到合适的出库建议'); return; }
+                    showFIFOSuggestionsModal(fifoSuggestionsCache);
+                } else {
+                    const text = await res.text();
+                    alert('获取建议失败: ' + text);
+                }
+            } catch (e) {
+                console.error('获取FIFO建议错误:', e);
+                alert('网络错误');
+            }
+        }
+        
+        function showFIFOSuggestionsModal(suggestions) {
+            let html = '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)hideFIFOSuggestionsModal()">' +
+                '<div style="background:#fff;border-radius:8px;max-width:600px;width:90%;max-height:80vh;overflow:auto;padding:20px;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">' +
+                '<h3 style="margin:0;">FIFO出库建议</h3>' +
+                '<button onclick="hideFIFOSuggestionsModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button>' +
+                '</div>' +
+                '<p style="color:#666;font-size:13px;margin-bottom:16px;">按入库日期先后推荐出库位置，点击"使用此位置"自动填入出库表单</p>';
+            
+            let total = 0;
+            suggestions.forEach((s, index) => {
+                const location = (s.shelfName || s.shelfCode || '') + ' - ' + (s.shelfLevelName || '') + ' ' + (s.position || '');
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e0e0e0;border-radius:6px;margin-bottom:8px;">' +
+                    '<div style="flex:1;">' +
+                    '<div style="font-weight:bold;">' + (index + 1) + '. ' + location.trim() + '</div>' +
+                    '<div style="font-size:13px;color:#666;margin-top:4px;">建议出库 ' + s.suggestedQuantity + ' 件（可用 ' + s.availableQuantity + ' 件，批次: ' + (s.batchNumber || '无') + '）</div>' +
+                    '</div>' +
+                    '<button onclick="applyFIFOSuggestion(' + index + ')" style="padding:6px 14px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">使用此位置</button>' +
+                    '</div>';
+                total += s.suggestedQuantity;
+            });
+            
+            html += '<div style="text-align:right;font-size:13px;color:#888;margin-top:8px;">建议总出库数量：' + total + ' 件</div>';
+            html += '</div></div>';
+            
+            const modal = document.createElement('div');
+            modal.id = 'fifoModalContainer';
+            modal.innerHTML = html;
+            document.body.appendChild(modal);
+        }
+        
+        function hideFIFOSuggestionsModal() {
+            const el = document.getElementById('fifoModalContainer');
+            if (el) el.remove();
+        }
+        
+        function applyFIFOSuggestion(index) {
+            const suggestion = fifoSuggestionsCache[index];
+            if (!suggestion) return;
+            
+            const select = document.getElementById('outboundLocation');
+            // 按locationId匹配选中
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value == suggestion.locationId) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+            // 数量已在输入框中，不需要改
+            hideFIFOSuggestionsModal();
+        }
+        
+        async function searchShelves() {
+            const keyword = document.getElementById('shelfSearchInput').value.trim();
+            const area = document.getElementById('shelfAreaFilter').value;
+            if (!keyword && !area) { resetShelfSearch(); return; }
+            document.getElementById('resetShelfSearchBtn').style.display = 'inline-block';
+            
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch('/store-keeper/shelves/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ keyword: keyword, area: area || null })
+                });
+                if (res.ok) renderShelvesTable(await res.json());
+            } catch (e) { console.error('搜索货架失败:', e); }
+        }
+        
+        function resetShelfSearch() {
+            document.getElementById('shelfSearchInput').value = '';
+            document.getElementById('shelfAreaFilter').value = '';
+            document.getElementById('resetShelfSearchBtn').style.display = 'none';
+            loadShelvesData();
+        }
+        
         function loadShelves() {
             const template = document.getElementById('shelfTemplate');
             const contentElement = document.getElementById('pageContent');
@@ -2144,6 +2515,11 @@
             } else {
                 document.getElementById('addShelfBtn').addEventListener('click', showAddShelfModal);
             }
+            
+            // 绑定回车搜索
+            document.getElementById('shelfSearchInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') searchShelves();
+            });
             
             // 初始化货架表单事件
             initShelfFormEvents();
@@ -2559,7 +2935,7 @@
         
         function handleRoute(path) {
             const route = path.substring(1) || 'dashboard';
-            if (['dashboard', 'goods', 'shelf', 'inventory', 'users', 'settings'].includes(route)) {
+            if (['dashboard', 'goods', 'shelf', 'inventory', 'inventorySearch', 'users', 'settings'].includes(route)) {
                 setActiveNav(document.querySelector(`[data-page="${route}"]`));
                 loadPage(route);
             }

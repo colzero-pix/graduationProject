@@ -705,6 +705,10 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
                     suggestion.put("locationId", location.getId());
                     suggestion.put("shelfLevelId", location.getShelfLevel().getId());
                     suggestion.put("shelfLevelName", location.getShelfLevel().getLevelName());
+                    if (location.getShelfLevel().getShelf() != null) {
+                        suggestion.put("shelfName", location.getShelfLevel().getShelf().getShelfName());
+                        suggestion.put("shelfCode", location.getShelfLevel().getShelf().getShelfCode());
+                    }
                     suggestion.put("position", location.getPosition());
                     suggestion.put("batchNumber", location.getBatchNumber());
                     suggestion.put("storageDate", location.getStorageDate());

@@ -894,7 +894,6 @@
                     <a class="nav-item" data-page="goods">商品管理</a>
                     <a class="nav-item" data-page="shelf">货架管理</a>
                     <a class="nav-item" data-page="inventory">库存总览</a>
-                    <a class="nav-item" data-page="inventorySearch">库存查询</a>
                     <a class="nav-item" data-page="users" id="usersNavItem" style="display: none;">用户管理</a>
                     <a class="nav-item" data-page="settings">个人设置</a>
                 </div>
@@ -1493,33 +1492,6 @@
         </div>
     </div>
     
-    <template id="inventorySearchTemplate">
-        <div class="page-title">库存查询</div>
-        
-        <div class="table-container">
-            <div class="table-header">
-                <div class="table-title">库存查询与批量操作</div>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <input type="text" id="invSearchKeyword" placeholder="搜索商品名称/编码..." style="padding:6px 12px;border:1px solid #ddd;border-radius:4px;font-size:13px;width:180px;">
-                    <select id="invSearchArea" style="padding:6px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
-                        <option value="">所有区域</option>
-                        <option value="常温区">常温区</option>
-                        <option value="冷藏区">冷藏区</option>
-                        <option value="冷冻区">冷冻区</option>
-                    </select>
-                    <button class="action-btn" onclick="doInventorySearch()" style="padding:6px 12px;">搜索</button>
-                    <button class="action-btn" onclick="resetInventorySearch()" style="display:none;" id="resetInvSearchBtn">重置</button>
-                </div>
-            </div>
-            <div id="invSearchTable" class="loading">加载库存数据...</div>
-            <div style="padding:12px;display:none;" id="invBatchActions">
-                <button class="action-btn" onclick="batchUpdateInvStatus('正常')">批量设为正常</button>
-                <button class="action-btn" onclick="batchUpdateInvStatus('待退货')">批量设为待退货</button>
-                <button class="action-btn delete" onclick="batchUpdateInvStatus('残损')">批量设为残损</button>
-            </div>
-        </div>
-    </template>
-    
     <!-- 库存管理模态框 -->
     <div id="inventoryManagementModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 600px;">
@@ -1921,9 +1893,6 @@
                     case 'inventory':
                         loadInventoryOverview();
                         break;
-                    case 'inventorySearch':
-                        loadInventorySearch();
-                        break;
                     case 'users':
                         loadUsers();
                         break;
@@ -2233,7 +2202,6 @@
                     <div class="stat-card" style="grid-column: span 1;">
                         <h4>货架使用率</h4>
                         <div style="font-size:36px;font-weight:bold;color:#1976d2;margin:10px 0;" id="statUtilization">-</div>
-                        <div style="color:#666;">已用 ${'${'}先占位${'}'} / 总容量 ${'${'}先占位${'}'}</div>
                     </div>
                     <div class="stat-card" style="grid-column: span 1;">
                         <h4>区域分布</h4>
@@ -2295,111 +2263,6 @@
             }
         }
 
-        // ========== 库存查询与批量操作 ==========
-        let selectedInvLocations = new Set();
-        
-        function loadInventorySearch() {
-            const template = document.getElementById('inventorySearchTemplate');
-            const contentElement = document.getElementById('pageContent');
-            contentElement.innerHTML = template.innerHTML;
-            document.getElementById('invSearchKeyword').addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') doInventorySearch();
-            });
-            doInventorySearch();
-        }
-        
-        async function doInventorySearch() {
-            const keyword = document.getElementById('invSearchKeyword').value.trim();
-            const area = document.getElementById('invSearchArea').value;
-            document.getElementById('resetInvSearchBtn').style.display = keyword || area ? 'inline-block' : 'none';
-            selectedInvLocations.clear();
-            document.getElementById('invBatchActions').style.display = 'none';
-            
-            const token = localStorage.getItem('auth_token');
-            try {
-                let url = '/store-keeper/inventory/search?';
-                if (keyword) url += 'keyword=' + encodeURIComponent(keyword) + '&';
-                if (area) url += 'area=' + encodeURIComponent(area) + '&';
-                
-                const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-                const el = document.getElementById('invSearchTable');
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    const list = data.inventoryList || data;
-                    if (!list || list.length === 0) {
-                        el.innerHTML = '<div class="no-data">未找到匹配的库存记录</div>';
-                        return;
-                    }
-                    let html = '<table><thead><tr><th style="width:40px;"><input type="checkbox" onchange="toggleAllInv(this)"></th>' +
-                        '<th>商品名称</th><th>货架位置</th><th>数量</th><th>批次号</th><th>入库日期</th><th>过期日期</th><th>状态</th></tr></thead><tbody>';
-                    list.forEach(item => {
-                        const locId = item.id || item.locationId;
-                        html += '<tr>' +
-                            '<td><input type="checkbox" class="inv-checkbox" value="' + locId + '" onchange="updateBatchBtn()"></td>' +
-                            '<td>' + (item.goodsName || '-') + '</td>' +
-                            '<td>' + (item.shelfCode || '') + ' ' + (item.levelName || '') + ' ' + (item.position || '') + '</td>' +
-                            '<td>' + (item.quantity || 0) + '</td>' +
-                            '<td>' + (item.batchNumber || '-') + '</td>' +
-                            '<td>' + (item.storageDate || '-') + '</td>' +
-                            '<td>' + (item.expiryDate || '-') + '</td>' +
-                            '<td><span class="status ' + (item.status === '正常' ? 'active' : 'inactive') + '">' + (item.status || '-') + '</span></td>' +
-                            '</tr>';
-                    });
-                    html += '</tbody></table>';
-                    el.innerHTML = html;
-                    document.getElementById('invBatchActions').style.display = 'block';
-                } else {
-                    el.innerHTML = '<div class="no-data">查询失败</div>';
-                }
-            } catch (e) {
-                console.error('查询库存失败:', e);
-                document.getElementById('invSearchTable').innerHTML = '<div class="no-data">网络错误</div>';
-            }
-        }
-        
-        function resetInventorySearch() {
-            document.getElementById('invSearchKeyword').value = '';
-            document.getElementById('invSearchArea').value = '';
-            document.getElementById('resetInvSearchBtn').style.display = 'none';
-            doInventorySearch();
-        }
-        
-        function toggleAllInv(master) {
-            document.querySelectorAll('.inv-checkbox').forEach(cb => cb.checked = master.checked);
-            updateBatchBtn();
-        }
-        
-        function updateBatchBtn() {
-            selectedInvLocations.clear();
-            document.querySelectorAll('.inv-checkbox:checked').forEach(cb => selectedInvLocations.add(cb.value));
-            document.getElementById('invBatchActions').style.display = selectedInvLocations.size > 0 ? 'block' : 'none';
-        }
-        
-        async function batchUpdateInvStatus(status) {
-            const ids = Array.from(document.querySelectorAll('.inv-checkbox:checked')).map(cb => parseInt(cb.value));
-            if (ids.length === 0) { alert('请先选择要修改的库存位置'); return; }
-            if (!confirm('确定将选中的 ' + ids.length + ' 条库存记录的状态改为「' + status + '」吗？')) return;
-            
-            const token = localStorage.getItem('auth_token');
-            try {
-                const res = await fetch('/store-keeper/inventory/batch-update-status?locationIds=' + ids.join(',') + '&status=' + encodeURIComponent(status), {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (res.ok) {
-                    alert('批量状态更新成功！');
-                    doInventorySearch();
-                } else {
-                    const data = await res.json();
-                    alert('更新失败: ' + (data.message || '未知错误'));
-                }
-            } catch (e) {
-                console.error('批量更新错误:', e);
-                alert('网络错误');
-            }
-        }
-        
         // ========== FIFO出库建议 ==========
         let fifoSuggestionsCache = [];
         
@@ -2935,7 +2798,7 @@
         
         function handleRoute(path) {
             const route = path.substring(1) || 'dashboard';
-            if (['dashboard', 'goods', 'shelf', 'inventory', 'inventorySearch', 'users', 'settings'].includes(route)) {
+            if (['dashboard', 'goods', 'shelf', 'inventory', 'users', 'settings'].includes(route)) {
                 setActiveNav(document.querySelector(`[data-page="${route}"]`));
                 loadPage(route);
             }

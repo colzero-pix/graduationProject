@@ -17,7 +17,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -390,5 +392,16 @@ public class StoreKeeperController {
     public ResponseEntity<?> getRecentOperationLogs() {
         List<OperationLog> logs = operationLogRepository.findTop10ByOrderByCreatedAtDesc();
         return ResponseEntity.ok(logs);
+    }
+
+    // 获取当天操作次数
+    @GetMapping("/operation-logs/today-count")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> getTodayOperationCount() {
+        LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        long count = operationLogRepository.countByCreatedAtAfter(todayStart);
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", count);
+        return ResponseEntity.ok(result);
     }
 }

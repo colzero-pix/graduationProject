@@ -874,10 +874,6 @@
                 </button>
             </form>
             
-            <div class="system-info">
-                <p>版本 1.0.0 | © 2026 超市仓库管理系统</p>
-                <p>技术支持: admin@warehouse.com</p>
-            </div>
         </div>
     </div>
     
@@ -931,7 +927,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="activeUsers">0</div>
-                <div class="stat-label">活跃用户</div>
+                <div class="stat-label">用户数量</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="todayOperations">0</div>
@@ -949,6 +945,12 @@
             <div class="table-container" style="flex: 1; min-width: 0;">
                 <div class="table-header" style="border-bottom-color: #f44336;">
                     <div class="table-title" style="color: #c62828;">临期商品预警</div>
+                    <div style="display:flex;gap:6px;align-items:center;font-size:13px;">
+                        <span style="color:#666;">提前</span>
+                        <input type="number" id="expiringDaysInput" value="30" min="1" max="365" style="width:50px;padding:3px 6px;border:1px solid #ddd;border-radius:3px;text-align:center;">
+                        <span style="color:#666;">天</span>
+                        <button class="action-btn" onclick="loadExpiringAlerts()" style="padding:3px 8px;font-size:12px;">刷新</button>
+                    </div>
                 </div>
                 <div id="expiringAlerts" class="loading">加载中...</div>
             </div>
@@ -1066,10 +1068,6 @@
             </div>
             <div class="modal-body">
                 <form id="addGoodsForm">
-                    <div class="form-note">
-                        <p><strong>注意：</strong>此操作仅添加商品类型信息。库存管理（入库/出库）请使用专门的库存管理功能。</p>
-                    </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label for="goodsSku">商品编码 (SKU)*</label>
@@ -1079,7 +1077,6 @@
                         <div class="form-group">
                             <label for="goodsName">商品名称*</label>
                             <input type="text" id="goodsName" name="name" placeholder="请输入商品名称" required>
-                            <div class="form-hint">如：矿泉水、饼干、牛奶等</div>
                         </div>
                     </div>
                     
@@ -1119,14 +1116,12 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="storageDate">默认入库日期</label>
-                            <input type="date" id="storageDate" name="storageDate">
-                            <div class="form-hint">默认入库日期（可选）</div>
+                            <label for="storageDate">入库日期*</label>
+                            <input type="date" id="storageDate" name="storageDate" required>
                         </div>
                         <div class="form-group">
-                            <label for="expiryDate">默认保质期</label>
-                            <input type="date" id="expiryDate" name="expiryDate">
-                            <div class="form-hint">默认保质期（可选）</div>
+                            <label for="expiryDate">保质期*</label>
+                            <input type="date" id="expiryDate" name="expiryDate" required>
                         </div>
                     </div>
                     
@@ -1241,10 +1236,6 @@
             </div>
             <div class="modal-body">
                 <form id="addShelfForm">
-                    <div class="form-note">
-                        <p><strong>注意：</strong>货架是四层库存管理系统的基础，添加货架后可以为其创建层级。</p>
-                    </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label for="shelfCode">货架编号*</label>
@@ -1501,10 +1492,6 @@
                 <button class="modal-close" id="closeInventoryModal">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-note">
-                    <p><strong>四层库存管理系统：</strong>Area → Shelf → Level → Position</p>
-                </div>
-                
                 <div class="inventory-tabs">
                     <button class="tab active" data-tab="inbound">入库</button>
                     <button class="tab" data-tab="outbound">出库</button>
@@ -1924,7 +1911,6 @@
                 if (statsResponse.ok) {
                     const stats = await statsResponse.json();
                     document.getElementById('totalGoods').textContent = stats.totalGoods || 0;
-                    document.getElementById('todayOperations').textContent = stats.totalQuantity || 0;
                 }
             } catch (e) {
                 console.error('加载统计失败:', e);
@@ -1941,6 +1927,32 @@
                 }
             } catch (e) {
                 console.error('加载货架数量失败:', e);
+            }
+            
+            // 加载用户数量（活跃用户）
+            try {
+                const userRes = await fetch('/user/all', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (userRes.ok) {
+                    const users = await userRes.json();
+                    document.getElementById('activeUsers').textContent = users.length || 0;
+                }
+            } catch (e) {
+                console.error('加载用户数量失败:', e);
+            }
+            
+            // 加载当天操作次数
+            try {
+                const logRes = await fetch('/store-keeper/operation-logs/today-count', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (logRes.ok) {
+                    const data = await logRes.json();
+                    document.getElementById('todayOperations').textContent = data.count || 0;
+                }
+            } catch (e) {
+                console.error('加载当天操作次数失败:', e);
             }
             
             // 加载低库存预警
@@ -1970,34 +1982,7 @@
             }
             
             // 加载临期商品预警
-            try {
-                const expiringRes = await fetch('/store-keeper/goods/expiring?days=30', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const el = document.getElementById('expiringAlerts');
-                if (expiringRes.ok) {
-                    const goods = await expiringRes.json();
-                    if (goods.length === 0) {
-                        el.innerHTML = '<div class="no-data" style="color:#4caf50;">无临期商品</div>';
-                    } else {
-                        let html = '<table><thead><tr><th>商品名称</th><th>过期日期</th><th>库存</th></tr></thead><tbody>';
-                        const today = new Date();
-                        goods.forEach(g => {
-                            const expDate = g.expiryDate || '-';
-                            const daysLeft = expDate !== '-' ? Math.ceil((new Date(expDate) - today) / (1000*60*60*24)) : '-';
-                            const isUrgent = daysLeft !== '-' && daysLeft <= 7;
-                            html += '<tr><td>' + (g.name || '-') + '</td><td style="color:' + (isUrgent ? '#d32f2f' : '#ff9800') + ';font-weight:bold;">' + expDate + (daysLeft !== '-' ? ' (' + daysLeft + '天)' : '') + '</td><td>' + (g.quantity || 0) + '</td></tr>';
-                        });
-                        html += '</tbody></table>';
-                        el.innerHTML = html;
-                    }
-                } else {
-                    el.innerHTML = '<div class="no-data">加载失败</div>';
-                }
-            } catch (e) {
-                console.error('加载临期商品预警失败:', e);
-                document.getElementById('expiringAlerts').innerHTML = '<div class="no-data">网络错误</div>';
-            }
+            await loadExpiringAlerts();
             
             try {
                 const logsResponse = await fetch('/store-keeper/operation-logs/recent', {
@@ -2041,6 +2026,39 @@
             } catch (error) {
                 console.error('加载操作记录失败:', error);
                 document.getElementById('recentOperations').innerHTML = '<div class="no-data">网络错误</div>';
+            }
+        }
+        
+        async function loadExpiringAlerts() {
+            const days = document.getElementById('expiringDaysInput') ? document.getElementById('expiringDaysInput').value : 30;
+            const token = localStorage.getItem('auth_token');
+            try {
+                const expiringRes = await fetch('/store-keeper/goods/expiring?days=' + days, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const el = document.getElementById('expiringAlerts');
+                if (expiringRes.ok) {
+                    const goods = await expiringRes.json();
+                    if (goods.length === 0) {
+                        el.innerHTML = '<div class="no-data" style="color:#4caf50;">无临期商品</div>';
+                    } else {
+                        let html = '<table><thead><tr><th>商品名称</th><th>过期日期</th><th>库存</th></tr></thead><tbody>';
+                        const today = new Date();
+                        goods.forEach(g => {
+                            const expDate = g.expiryDate || '-';
+                            const daysLeft = expDate !== '-' ? Math.ceil((new Date(expDate) - today) / (1000*60*60*24)) : '-';
+                            const isUrgent = daysLeft !== '-' && daysLeft <= 7;
+                            html += '<tr><td>' + (g.name || '-') + '</td><td style="color:' + (isUrgent ? '#d32f2f' : '#ff9800') + ';font-weight:bold;">' + expDate + (daysLeft !== '-' ? ' (' + daysLeft + '天)' : '') + '</td><td>' + (g.quantity || 0) + '</td></tr>';
+                        });
+                        html += '</tbody></table>';
+                        el.innerHTML = html;
+                    }
+                } else {
+                    el.innerHTML = '<div class="no-data">加载失败</div>';
+                }
+            } catch (e) {
+                console.error('加载临期商品预警失败:', e);
+                document.getElementById('expiringAlerts').innerHTML = '<div class="no-data">网络错误</div>';
             }
         }
         

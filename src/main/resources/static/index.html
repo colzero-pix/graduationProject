@@ -1257,8 +1257,6 @@
                                 <option value="常温区">常温区</option>
                                 <option value="冷藏区">冷藏区</option>
                                 <option value="冷冻区">冷冻区</option>
-                                <option value="干货区">干货区</option>
-                                <option value="生鲜区">生鲜区</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1358,10 +1356,6 @@
             </div>
             <div class="modal-body">
                 <form id="editShelfForm">
-                    <div class="form-note">
-                        <p><strong>注意：</strong>修改货架信息可能会影响库存管理。</p>
-                    </div>
-                    
                     <input type="hidden" id="editShelfId" name="id">
                     
                     <div class="form-row">
@@ -1385,8 +1379,6 @@
                                 <option value="常温区">常温区</option>
                                 <option value="冷藏区">冷藏区</option>
                                 <option value="冷冻区">冷冻区</option>
-                                <option value="干货区">干货区</option>
-                                <option value="生鲜区">生鲜区</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1396,7 +1388,6 @@
                                 <option value="高频快消区">高频快消区</option>
                                 <option value="中频干货区">中频干货区</option>
                                 <option value="低频重物区">低频重物区</option>
-                                <option value="促销展示区">促销展示区</option>
                             </select>
                         </div>
                     </div>
@@ -3831,10 +3822,6 @@
                 const modalBody = modal.querySelector('.modal-body');
                 modalBody.innerHTML = `
                     <form id="editShelfForm">
-                        <div class="form-note">
-                            <p><strong>注意：</strong>修改货架信息可能会影响库存管理。</p>
-                        </div>
-                        
                         <input type="hidden" id="editShelfId" name="id">
                         
                         <div class="form-row">
@@ -3858,8 +3845,6 @@
                                     <option value="常温区">常温区</option>
                                     <option value="冷藏区">冷藏区</option>
                                     <option value="冷冻区">冷冻区</option>
-                                    <option value="干货区">干货区</option>
-                                    <option value="生鲜区">生鲜区</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -3869,7 +3854,6 @@
                                     <option value="高频快消区">高频快消区</option>
                                     <option value="中频干货区">中频干货区</option>
                                     <option value="低频重物区">低频重物区</option>
-                                    <option value="促销展示区">促销展示区</option>
                                 </select>
                             </div>
                         </div>
@@ -3974,10 +3958,6 @@
                 // 重新创建表单并填充数据
                 modalBody.innerHTML = `
                     <form id="editShelfForm">
-                        <div class="form-note">
-                            <p><strong>注意：</strong>修改货架信息可能会影响库存管理。</p>
-                        </div>
-                        
                         <input type="hidden" id="editShelfId" name="id" value="${shelf.id || ''}">
                         
                         <div class="form-row">
@@ -4012,7 +3992,7 @@
                                     <option value="高频快消区" ${shelf.shelfType === '高频快消区' ? 'selected' : ''}>高频快消区</option>
                                     <option value="中频干货区" ${shelf.shelfType === '中频干货区' ? 'selected' : ''}>中频干货区</option>
                                     <option value="低频重物区" ${shelf.shelfType === '低频重物区' ? 'selected' : ''}>低频重物区</option>
-                                    <option value="促销展示区" ${shelf.shelfType === '促销展示区' ? 'selected' : ''}>促销展示区</option>
+
                                 </select>
                             </div>
                         </div>

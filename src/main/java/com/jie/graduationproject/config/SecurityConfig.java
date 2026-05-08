@@ -46,7 +46,6 @@ public class SecurityConfig {
 
                     authorize.requestMatchers(
                             "/user/login",
-                            "/user/register",
                             "/",
                             "/index.html",
                             "/favicon.ico",

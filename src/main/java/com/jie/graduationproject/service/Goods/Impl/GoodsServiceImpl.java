@@ -52,8 +52,7 @@ public class GoodsServiceImpl implements GoodsService {
             // 商品类型添加时不设置库存数量，库存数量从inventory_location表计算
             goods.setQuantity(0);
             goods.setThreshold(addGoodsDTO.getThreshold() != null ? addGoodsDTO.getThreshold() : 10);
-            goods.setStorageDate(addGoodsDTO.getStorageDate() != null ? addGoodsDTO.getStorageDate() : LocalDate.now());
-            goods.setExpiryDate(addGoodsDTO.getExpiryDate());
+            goods.setShelfLifeMonths(addGoodsDTO.getShelfLifeMonths());
             goods.setSupplierName(addGoodsDTO.getSupplierName());
             goods.setSupplierContact(addGoodsDTO.getSupplierContact());
             goods.setCreatedAt(LocalDateTime.now());
@@ -94,7 +93,9 @@ public class GoodsServiceImpl implements GoodsService {
                 goods.setThreshold(updateGoodsDTO.getThreshold());
             }
             
-            goods.setExpiryDate(updateGoodsDTO.getExpiryDate());
+            if (updateGoodsDTO.getShelfLifeMonths() != null) {
+                goods.setShelfLifeMonths(updateGoodsDTO.getShelfLifeMonths());
+            }
             goods.setSupplierName(updateGoodsDTO.getSupplierName());
             goods.setSupplierContact(updateGoodsDTO.getSupplierContact());
             goods.setUpdatedAt(LocalDateTime.now());
@@ -182,14 +183,7 @@ public class GoodsServiceImpl implements GoodsService {
                             match = match && goods.getLocation().contains(queryDTO.getLocation());
                         }
                         
-                        if (queryDTO.getNearExpiry() != null && queryDTO.getNearExpiry()) {
-                            LocalDate warningDate = LocalDate.now().plusDays(30);
-                            if (goods.getExpiryDate() != null && goods.getExpiryDate().isBefore(warningDate)) {
-                                // 商品临近过期，继续匹配
-                            } else {
-                                match = false; // 商品不临近过期，不匹配
-                            }
-                        }
+                        // 临期查询已移至库存服务层，此处略过
                         
                         if (queryDTO.getLowStock() != null && queryDTO.getLowStock()) {
                             if (goods.getThreshold() != null && goods.getQuantity() != null && 
@@ -243,12 +237,6 @@ public class GoodsServiceImpl implements GoodsService {
     }
 
     @Override
-    public List<Goods> getGoodsByExpiryDate() {
-
-        return goodsRepository.findAllByOrderByExpiryDateAsc();
-    }
-
-    @Override
     public ResponseEntity<?> getLowStockGoods() {
         try {
             List<Goods> allGoods = goodsRepository.findAll();
@@ -258,29 +246,6 @@ public class GoodsServiceImpl implements GoodsService {
                     .toList();
             
             return ResponseEntity.ok(lowStockGoods);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("查询失败：" + e.getMessage());
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> getExpiringGoods(Integer days) {
-        try {
-            if (days == null) {
-                days = 30; // 默认30天内过期
-            }
-            
-            LocalDate warningDate = LocalDate.now().plusDays(days);
-            List<Goods> allGoods = goodsRepository.findAll();
-            List<Goods> expiringGoods = allGoods.stream()
-                    .filter(goods -> goods.getExpiryDate() != null && 
-                            !goods.getExpiryDate().isBefore(LocalDate.now()) &&
-                            goods.getExpiryDate().isBefore(warningDate))
-                    .toList();
-            
-            return ResponseEntity.ok(expiringGoods);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

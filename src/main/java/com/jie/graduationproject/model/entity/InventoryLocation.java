@@ -32,6 +32,10 @@ public class InventoryLocation {
     private String batchNumber; // 批次号
 
     @JsonFormat(pattern = "yyyy-MM-dd")
+    @Column(name = "production_date")
+    private LocalDate productionDate; // 该批次生产日期
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "storage_date")
     private LocalDate storageDate; // 该批次入库日期
 
@@ -100,6 +104,14 @@ public class InventoryLocation {
 
     public void setBatchNumber(String batchNumber) {
         this.batchNumber = batchNumber;
+    }
+
+    public LocalDate getProductionDate() {
+        return productionDate;
+    }
+
+    public void setProductionDate(LocalDate productionDate) {
+        this.productionDate = productionDate;
     }
 
     public LocalDate getStorageDate() {

@@ -15,8 +15,7 @@ public class GoodsDetailDTO {
     private String name;
     private String storageTemperature;
     private String status;
-    private LocalDate storageDate;
-    private LocalDate expiryDate;
+    private Integer shelfLifeMonths;
     private String supplierName;
     private String supplierContact;
     private Integer quantity;
@@ -50,11 +49,8 @@ public class GoodsDetailDTO {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     
-    public LocalDate getStorageDate() { return storageDate; }
-    public void setStorageDate(LocalDate storageDate) { this.storageDate = storageDate; }
-    
-    public LocalDate getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    public Integer getShelfLifeMonths() { return shelfLifeMonths; }
+    public void setShelfLifeMonths(Integer shelfLifeMonths) { this.shelfLifeMonths = shelfLifeMonths; }
     
     public String getSupplierName() { return supplierName; }
     public void setSupplierName(String supplierName) { this.supplierName = supplierName; }
@@ -171,8 +167,7 @@ public class GoodsDetailDTO {
         dto.setName(goods.getName());
         dto.setStorageTemperature(goods.getStorageTemperature());
         dto.setStatus(goods.getStatus());
-        dto.setStorageDate(goods.getStorageDate());
-        dto.setExpiryDate(goods.getExpiryDate());
+        dto.setShelfLifeMonths(goods.getShelfLifeMonths());
         dto.setSupplierName(goods.getSupplierName());
         dto.setSupplierContact(goods.getSupplierContact());
         // 注意：不设置quantity字段，因为quantity应该从inventory_location表计算

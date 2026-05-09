@@ -24,9 +24,8 @@ public class UpdateGoodsDTO {
     //库存预警阈值（低于此值提醒进货）
     private Integer threshold;
 
-    //有效期/过期日期
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate expiryDate;
+    //保质期（月数）
+    private Integer shelfLifeMonths;
 
     //供应商名称
     private String supplierName;
@@ -83,12 +82,12 @@ public class UpdateGoodsDTO {
         this.threshold = threshold;
     }
 
-    public LocalDate getExpiryDate() {
-        return expiryDate;
+    public Integer getShelfLifeMonths() {
+        return shelfLifeMonths;
     }
 
-    public void setExpiryDate(LocalDate expiryDate) {
-        this.expiryDate = expiryDate;
+    public void setShelfLifeMonths(Integer shelfLifeMonths) {
+        this.shelfLifeMonths = shelfLifeMonths;
     }
 
     public String getSupplierName() {

@@ -20,7 +20,6 @@ public interface GoodsRepository extends JpaRepository<Goods, Long> {
 
     boolean existsGoodsByName(String name);
 
-    List<Goods> findAllByOrderByExpiryDateAsc();
     
     // 根据位置查找商品（位置格式如：A-01-3 表示A区01号货架第3层）
     List<Goods> findByLocationContaining(String location);

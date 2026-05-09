@@ -114,8 +114,7 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
                 goods.setName(goodsInfo.getName());
                 goods.setStorageTemperature(goodsInfo.getStorageTemperature());
                 goods.setStatus(goodsInfo.getStatus());
-                goods.setStorageDate(goodsInfo.getStorageDate());
-                goods.setExpiryDate(goodsInfo.getExpiryDate());
+                goods.setShelfLifeMonths(goodsInfo.getShelfLifeMonths());
                 goods.setSupplierName(goodsInfo.getSupplierName());
                 goods.setSupplierContact(goodsInfo.getSupplierContact());
                 goods.setCreatedAt(LocalDateTime.now());
@@ -151,10 +150,14 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
                 inventoryLocation.setQuantity(locationInfo.getQuantity());
                 inventoryLocation.setPosition(locationInfo.getPosition());
                 inventoryLocation.setBatchNumber(locationInfo.getBatchNumber());
+                // 如果位置没有单独设置日期，则从商品信息计算
                 inventoryLocation.setStorageDate(locationInfo.getStorageDate() != null ? 
-                        locationInfo.getStorageDate() : goodsInfo.getStorageDate());
-                inventoryLocation.setExpiryDate(locationInfo.getExpiryDate() != null ? 
-                        locationInfo.getExpiryDate() : goodsInfo.getExpiryDate());
+                        locationInfo.getStorageDate() : goodsInfo.getProductionDate());
+                if (locationInfo.getExpiryDate() != null) {
+                    inventoryLocation.setExpiryDate(locationInfo.getExpiryDate());
+                } else if (goodsInfo.getProductionDate() != null && goodsInfo.getShelfLifeMonths() != null) {
+                    inventoryLocation.setExpiryDate(goodsInfo.getProductionDate().plusMonths(goodsInfo.getShelfLifeMonths()));
+                }
                 inventoryLocation.setStatus("正常");
                 inventoryLocation.setCreatedAt(LocalDateTime.now());
                 inventoryLocation.setUpdatedAt(LocalDateTime.now());
@@ -1008,7 +1011,7 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
     @Override
     public ResponseEntity<?> createInventoryLocation(Long goodsId, Long shelfLevelId, Integer quantity,
                                                     String position, String batchNumber,
-                                                    String storageDateStr, String expiryDateStr) {
+                                                    String productionDateStr, String expiryDateStr) {
         try {
             // 检查商品是否存在
             Optional<Goods> optionalGoods = goodsRepository.findById(goodsId);
@@ -1049,14 +1052,18 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
             location.setStatus("正常");
             
             // 设置日期
-            if (storageDateStr != null && !storageDateStr.isEmpty()) {
-                location.setStorageDate(java.time.LocalDate.parse(storageDateStr));
-            } else {
-                location.setStorageDate(java.time.LocalDate.now());
+            location.setStorageDate(java.time.LocalDate.now());
+            
+            // 设置生产日期（由前端传入）
+            if (productionDateStr != null && !productionDateStr.isEmpty()) {
+                location.setProductionDate(java.time.LocalDate.parse(productionDateStr));
             }
             
+            // 设置过期日期：优先使用前端传入的值，否则根据生产日期+保质期计算
             if (expiryDateStr != null && !expiryDateStr.isEmpty()) {
                 location.setExpiryDate(java.time.LocalDate.parse(expiryDateStr));
+            } else if (location.getProductionDate() != null && goods.getShelfLifeMonths() != null) {
+                location.setExpiryDate(location.getProductionDate().plusMonths(goods.getShelfLifeMonths()));
             }
             
             location.setCreatedAt(LocalDateTime.now());

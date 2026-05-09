@@ -51,5 +51,5 @@ public interface InventoryLocationService {
     // 创建库存位置（为已存在商品入库）
     ResponseEntity<?> createInventoryLocation(Long goodsId, Long shelfLevelId, Integer quantity, 
                                             String position, String batchNumber, 
-                                            String storageDate, String expiryDate);
+                                            String productionDate, String expiryDate);
 }

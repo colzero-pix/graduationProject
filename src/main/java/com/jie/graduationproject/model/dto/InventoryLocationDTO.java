@@ -22,6 +22,9 @@ public class InventoryLocationDTO {
     private String batchNumber;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate productionDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate storageDate;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -141,6 +144,14 @@ public class InventoryLocationDTO {
         this.batchNumber = batchNumber;
     }
 
+    public LocalDate getProductionDate() {
+        return productionDate;
+    }
+
+    public void setProductionDate(LocalDate productionDate) {
+        this.productionDate = productionDate;
+    }
+
     public LocalDate getStorageDate() {
         return storageDate;
     }
@@ -215,6 +226,7 @@ public class InventoryLocationDTO {
         dto.setQuantity(entity.getQuantity());
         dto.setPosition(entity.getPosition());
         dto.setBatchNumber(entity.getBatchNumber());
+        dto.setProductionDate(entity.getProductionDate());
         dto.setStorageDate(entity.getStorageDate());
         dto.setExpiryDate(entity.getExpiryDate());
         dto.setStatus(entity.getStatus());

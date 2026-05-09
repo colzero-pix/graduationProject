@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "goods")
@@ -35,13 +34,8 @@ public class Goods {
     //库存预警阈值（低于此值提醒进货）
     private Integer threshold;
 
-    //入库日期，用于先进先出管理
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate storageDate;
-
-    //有效期/过期日期
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate expiryDate;
+    //保质期（月数，如6表示6个月，12表示1年）
+    private Integer shelfLifeMonths;
 
     //供应商名称
     private String supplierName;
@@ -122,20 +116,12 @@ public class Goods {
         this.threshold = threshold;
     }
 
-    public LocalDate getStorageDate() {
-        return storageDate;
+    public Integer getShelfLifeMonths() {
+        return shelfLifeMonths;
     }
 
-    public void setStorageDate(LocalDate storageDate) {
-        this.storageDate = storageDate;
-    }
-
-    public LocalDate getExpiryDate() {
-        return expiryDate;
-    }
-
-    public void setExpiryDate(LocalDate expiryDate) {
-        this.expiryDate = expiryDate;
+    public void setShelfLifeMonths(Integer shelfLifeMonths) {
+        this.shelfLifeMonths = shelfLifeMonths;
     }
 
     public String getSupplierName() {

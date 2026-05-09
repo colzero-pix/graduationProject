@@ -179,12 +179,7 @@ public class StoreKeeperController {
         return goodsServiceImpl.getLowStockGoods();
     }
 
-    // 获取即将过期商品
-    @GetMapping("/goods/expiring")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getExpiringGoods(@RequestParam(defaultValue = "7") Integer days) {
-        return goodsServiceImpl.getExpiringGoods(days);
-    }
+
     
     // 查询商品详情（包含库存位置信息）
     @GetMapping("/goods/{id}/detail")
@@ -312,12 +307,12 @@ public class StoreKeeperController {
             Integer quantity = Integer.parseInt(request.get("quantity").toString());
             String position = (String) request.get("position");
             String batchNumber = (String) request.get("batchNumber");
-            String storageDateStr = (String) request.get("storageDate");
+            String productionDateStr = (String) request.get("productionDate");
             String expiryDateStr = (String) request.get("expiryDate");
             
             // 直接调用服务方法创建库存位置
             return inventoryLocationService.createInventoryLocation(goodsId, shelfLevelId, quantity, 
-                    position, batchNumber, storageDateStr, expiryDateStr);
+                    position, batchNumber, productionDateStr, expiryDateStr);
             
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

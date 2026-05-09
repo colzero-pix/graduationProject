@@ -34,12 +34,11 @@ public class AddGoodsWithLocationDTO {
         private String status;
 
         @JsonFormat(pattern = "yyyy-MM-dd")
-        @NotNull(message = "入库日期不能为空")
-        private LocalDate storageDate;
+        @NotNull(message = "生产日期不能为空")
+        private LocalDate productionDate;
 
-        @JsonFormat(pattern = "yyyy-MM-dd")
-        @NotNull(message = "过期日期不能为空")
-        private LocalDate expiryDate;
+        @NotNull(message = "保质期不能为空")
+        private Integer shelfLifeMonths;
 
         private String supplierName;
         private String supplierContact;
@@ -77,20 +76,20 @@ public class AddGoodsWithLocationDTO {
             this.status = status;
         }
 
-        public LocalDate getStorageDate() {
-            return storageDate;
+        public LocalDate getProductionDate() {
+            return productionDate;
         }
 
-        public void setStorageDate(LocalDate storageDate) {
-            this.storageDate = storageDate;
+        public void setProductionDate(LocalDate productionDate) {
+            this.productionDate = productionDate;
         }
 
-        public LocalDate getExpiryDate() {
-            return expiryDate;
+        public Integer getShelfLifeMonths() {
+            return shelfLifeMonths;
         }
 
-        public void setExpiryDate(LocalDate expiryDate) {
-            this.expiryDate = expiryDate;
+        public void setShelfLifeMonths(Integer shelfLifeMonths) {
+            this.shelfLifeMonths = shelfLifeMonths;
         }
 
         public String getSupplierName() {

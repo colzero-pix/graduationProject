@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>超市仓库管理系统</title>
+
     <style>
         * {
             margin: 0;
@@ -1116,12 +1117,18 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="storageDate">入库日期*</label>
-                            <input type="date" id="storageDate" name="storageDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="expiryDate">保质期*</label>
-                            <input type="date" id="expiryDate" name="expiryDate" required>
+                            <label for="shelfLifeMonths">保质期*</label>
+                            <select id="shelfLifeMonths" name="shelfLifeMonths" required>
+                                <option value="">请选择</option>
+                                <option value="1">1个月</option>
+                                <option value="3">3个月</option>
+                                <option value="6">6个月</option>
+                                <option value="9">9个月</option>
+                                <option value="12">1年</option>
+                                <option value="18">1年半</option>
+                                <option value="24">2年</option>
+                                <option value="36">3年</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -1203,9 +1210,18 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="editExpiryDate">保质期</label>
-                            <input type="date" id="editExpiryDate" name="expiryDate">
-                            <div class="form-hint">商品保质期</div>
+                            <label for="editShelfLifeMonths">保质期</label>
+                            <select id="editShelfLifeMonths" name="shelfLifeMonths">
+                                <option value="">请选择</option>
+                                <option value="1">1个月</option>
+                                <option value="3">3个月</option>
+                                <option value="6">6个月</option>
+                                <option value="9">9个月</option>
+                                <option value="12">1年</option>
+                                <option value="18">1年半</option>
+                                <option value="24">2年</option>
+                                <option value="36">3年</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="editSupplierName">供应商名称</label>
@@ -1518,12 +1534,13 @@
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="inboundStorageDate">入库日期</label>
-                            <input type="date" id="inboundStorageDate" name="storageDate">
+                            <label for="inboundProductionDate">生产日期*</label>
+                            <input type="date" id="inboundProductionDate" name="productionDate" required>
                         </div>
                         <div class="form-group">
                             <label for="inboundExpiryDate">过期日期</label>
                             <input type="date" id="inboundExpiryDate" name="expiryDate">
+                            <div class="form-hint">不填则按生产日期+保质期自动计算</div>
                         </div>
                     </div>
                     
@@ -2024,22 +2041,23 @@
             const days = document.getElementById('expiringDaysInput') ? document.getElementById('expiringDaysInput').value : 30;
             const token = localStorage.getItem('auth_token');
             try {
-                const expiringRes = await fetch('/store-keeper/goods/expiring?days=' + days, {
+                const expiringRes = await fetch('/store-keeper/inventory/expiring?days=' + days, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const el = document.getElementById('expiringAlerts');
                 if (expiringRes.ok) {
-                    const goods = await expiringRes.json();
+                    const data = await expiringRes.json();
+                    const goods = data.expiringGoods || [];
                     if (goods.length === 0) {
                         el.innerHTML = '<div class="no-data" style="color:#4caf50;">无临期商品</div>';
                     } else {
-                        let html = '<table><thead><tr><th>商品名称</th><th>过期日期</th><th>库存</th></tr></thead><tbody>';
+                        let html = '<table><thead><tr><th>商品名称</th><th>最早过期日期</th><th>总库存</th></tr></thead><tbody>';
                         const today = new Date();
                         goods.forEach(g => {
-                            const expDate = g.expiryDate || '-';
+                            const expDate = g.earliestExpiryDate || '-';
                             const daysLeft = expDate !== '-' ? Math.ceil((new Date(expDate) - today) / (1000*60*60*24)) : '-';
                             const isUrgent = daysLeft !== '-' && daysLeft <= 7;
-                            html += '<tr><td>' + (g.name || '-') + '</td><td style="color:' + (isUrgent ? '#d32f2f' : '#ff9800') + ';font-weight:bold;">' + expDate + (daysLeft !== '-' ? ' (' + daysLeft + '天)' : '') + '</td><td>' + (g.quantity || 0) + '</td></tr>';
+                            html += '<tr><td>' + (g.goodsName || '-') + '</td><td style="color:' + (isUrgent ? '#d32f2f' : '#ff9800') + ';font-weight:bold;">' + expDate + (daysLeft !== '-' ? ' (' + daysLeft + '天)' : '') + '</td><td>' + (g.totalQuantity || 0) + '</td></tr>';
                         });
                         html += '</tbody></table>';
                         el.innerHTML = html;
@@ -2822,14 +2840,12 @@
         // ========== 添加商品功能 ==========
         
         function initAddGoodsModal() {
-            // 设置默认日期（今天和30天后）
-            const today = new Date().toISOString().split('T')[0];
-            const nextMonth = new Date();
-            nextMonth.setDate(nextMonth.getDate() + 30);
-            const nextMonthStr = nextMonth.toISOString().split('T')[0];
-            
-            document.getElementById('storageDate').value = today;
-            document.getElementById('expiryDate').value = nextMonthStr;
+            document.getElementById('shelfLifeMonths').value = '12';
+        }
+        
+        function initAddGoodsModal() {
+            document.getElementById('shelfLifeMonths').value = '12';
+            document.getElementById('shelfLifeMonths').value = '12';
             
             // 绑定模态框关闭事件
             document.getElementById('closeAddGoodsModal').addEventListener('click', hideAddGoodsModal);
@@ -2869,12 +2885,8 @@
             
             // 重新设置默认日期
             const today = new Date().toISOString().split('T')[0];
-            const nextMonth = new Date();
-            nextMonth.setDate(nextMonth.getDate() + 30);
-            const nextMonthStr = nextMonth.toISOString().split('T')[0];
-            
-            document.getElementById('storageDate').value = today;
-            document.getElementById('expiryDate').value = nextMonthStr;
+            document.getElementById('productionDate').value = today;
+            document.getElementById('shelfLifeMonths').value = '12';
         }
         
         function hideAddGoodsModal() {
@@ -2900,26 +2912,15 @@
                     location: document.getElementById('goodsLocation').value.trim(),
                     status: document.getElementById('goodsStatus').value,
                     threshold: parseInt(document.getElementById('goodsThreshold').value) || 10,
-                    storageDate: document.getElementById('storageDate').value || null,
-                    expiryDate: document.getElementById('expiryDate').value || null,
+                    shelfLifeMonths: parseInt(document.getElementById('shelfLifeMonths').value) || null,
                     supplierName: document.getElementById('supplierName').value.trim(),
                     supplierContact: document.getElementById('supplierContact').value.trim()
                 };
                 
                 // 验证必填字段
                 if (!formData.sku || !formData.name || !formData.storageTemperature || 
-                    !formData.status) {
+                    !formData.status || !formData.shelfLifeMonths) {
                     alert('请填写所有必填字段（带*号）');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = originalText;
-                    return;
-                }
-                
-                // 验证日期
-                const storageDate = new Date(formData.storageDate);
-                const expiryDate = new Date(formData.expiryDate);
-                if (expiryDate <= storageDate) {
-                    alert('过期日期必须晚于入库日期');
                     submitBtn.disabled = false;
                     submitBtn.textContent = originalText;
                     return;
@@ -2987,7 +2988,9 @@
                     document.getElementById('editGoodsLocation').value = goods.location || '';
                     document.getElementById('editGoodsStatus').value = goods.status || '';
                     document.getElementById('editGoodsThreshold').value = goods.threshold || 0;
-                    document.getElementById('editExpiryDate').value = goods.expiryDate || '';
+                    if (goods.shelfLifeMonths) {
+                        document.getElementById('editShelfLifeMonths').value = goods.shelfLifeMonths;
+                    }
                     document.getElementById('editSupplierName').value = goods.supplierName || '';
                     document.getElementById('editSupplierContact').value = goods.supplierContact || '';
                 } else {
@@ -3017,7 +3020,7 @@
                     location: document.getElementById('editGoodsLocation').value.trim(),
                     status: document.getElementById('editGoodsStatus').value,
                     threshold: parseInt(document.getElementById('editGoodsThreshold').value) || 0,
-                    expiryDate: document.getElementById('editExpiryDate').value || null,
+                    shelfLifeMonths: parseInt(document.getElementById('editShelfLifeMonths').value) || null,
                     supplierName: document.getElementById('editSupplierName').value.trim(),
                     supplierContact: document.getElementById('editSupplierContact').value.trim()
                 };
@@ -3098,8 +3101,7 @@
                 '<th>货架位置</th>' +
                 '<th>库存</th>' +
                 '<th>状态</th>' +
-                '<th>入库日期</th>' +
-                '<th>过期日期</th>' +
+                '<th>保质期</th>' +
                 '<th>操作</th>' +
                 '</tr></thead><tbody>';
             
@@ -3118,8 +3120,7 @@
                     '<td>' + (goods.location || 'N/A') + '</td>' +
                     '<td class="' + stockClass + '">' + quantity + ' / ' + threshold + '</td>' +
                     '<td><span class="status ' + statusClass + '">' + (goods.status || '未知') + '</span></td>' +
-                    '<td>' + (goods.storageDate || 'N/A') + '</td>' +
-                    '<td>' + (goods.expiryDate || 'N/A') + '</td>' +
+                    '<td>' + (goods.shelfLifeMonths ? goods.shelfLifeMonths + '个月' : 'N/A') + '</td>' +
                     '<td class="action-buttons">' +
                     '<button class="action-btn detail" data-id="' + goods.id + '" onclick="showGoodsDetail(' + goods.id + ')">详情</button>' +
                     '<button class="action-btn inventory" data-id="' + goods.id + '" onclick="showInventoryManagement(' + goods.id + ')">库存</button>' +
@@ -3195,8 +3196,7 @@
                 '<div class="info-item"><strong>状态:</strong> <span class="status ' + (goodsDetail.status === '正常' ? 'active' : 'inactive') + '">' + (goodsDetail.status || '未知') + '</span></div>' +
                 '<div class="info-item"><strong>总库存:</strong> ' + (goodsDetail.quantity || 0) + '</div>' +
                 '<div class="info-item"><strong>库存阈值:</strong> ' + (goodsDetail.threshold || 0) + '</div>' +
-                '<div class="info-item"><strong>入库日期:</strong> ' + (goodsDetail.storageDate || 'N/A') + '</div>' +
-                '<div class="info-item"><strong>过期日期:</strong> ' + (goodsDetail.expiryDate || 'N/A') + '</div>' +
+                '<div class="info-item"><strong>保质期:</strong> ' + (goodsDetail.shelfLifeMonths ? goodsDetail.shelfLifeMonths + '个月' : 'N/A') + '</div>' +
                 '<div class="info-item"><strong>供应商:</strong> ' + (goodsDetail.supplierName || 'N/A') + '</div>' +
                 '<div class="info-item"><strong>联系方式:</strong> ' + (goodsDetail.supplierContact || 'N/A') + '</div>' +
                 '</div>' +
@@ -3329,12 +3329,10 @@
         async function initInventoryForms() {
             // 设置默认日期
             const today = new Date().toISOString().split('T')[0];
-            const nextMonth = new Date();
-            nextMonth.setDate(nextMonth.getDate() + 30);
-            const nextMonthStr = nextMonth.toISOString().split('T')[0];
             
-            document.getElementById('inboundStorageDate').value = today;
-            document.getElementById('inboundExpiryDate').value = nextMonthStr;
+            if (document.getElementById('inboundProductionDate')) {
+                document.getElementById('inboundProductionDate').value = today;
+            }
             
             try {
                 // 先获取商品信息，以便根据商品类型加载合适的货架层
@@ -3622,12 +3620,12 @@
                 quantity: parseInt(document.getElementById('inboundQuantity').value),
                 position: document.getElementById('inboundPosition').value,
                 batchNumber: document.getElementById('inboundBatchNumber').value,
-                storageDate: document.getElementById('inboundStorageDate').value,
+                productionDate: document.getElementById('inboundProductionDate').value,
                 expiryDate: document.getElementById('inboundExpiryDate').value
             };
             
             // 验证
-            if (!formData.shelfLevelId || !formData.quantity || formData.quantity <= 0) {
+            if (!formData.shelfLevelId || !formData.quantity || formData.quantity <= 0 || !formData.productionDate) {
                 alert('请填写完整的入库信息');
                 return;
             }
